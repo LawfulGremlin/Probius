@@ -1,0 +1,6 @@
+discord.py==1.7.3
+beautifulsoup4
+requests
+pillow
+nest_asyncio
+scipy

@@ -34,6 +34,9 @@ from maps import *
 from discordIDs import *
 #from imageColour import *
 
+import logging
+logging.basicConfig(level=logging.INFO)
+
 botChannels={'Wind Striders':DiscordChannelIDs['Probius'],'De Schuifpui Schavuiten':687351660502057021, 'Nexus Schoolhouse':813507461427363870, 'Inting for Ruby':834135120154853416}
 
 wsReactionRoles={'🇧':DiscordRoleIDs['BalanceTeam'],'🇩':DiscordRoleIDs['DraftAddict'],'🇸':860563593090564107,
@@ -72,6 +75,11 @@ heroAliases=['hero', 'heroes', 'bruiser', 'healer', 'support', 'ranged', 'melee'
 coachingAliases=['coach', 'coaching', 'coachingsession']
 randomBuildAliases=['randombuild','rb','randb','randbuild','randomb']
 
+SUPPRESS_USER_IDS = [
+	603924594956435491,  # Probius
+#	786255199069143101,  # GuineaPig
+]
+
 async def mainProbius(client,message,texts):
 	global exitBool
 	for draftAlias in draftAliases: #Don't want to log draft commands because they really spam.
@@ -86,7 +94,17 @@ async def mainProbius(client,message,texts):
 		channelName='hots' if channelName=='heroes-got-canceled' else channelName
 		loggingMessage=guildname+' '*(15-len(guildname))+channelName+' '+' '*(17-len(channelName))+str(message.author.name)+' '*(18-len(str(message.author.name)))+' '+message.content
 		print(loggingMessage)
-		await client.get_channel(DiscordChannelIDs['LoggingChannel']).send('`{}`'.format(loggingMessage))
+#		await client.get_channel(DiscordChannelIDs['LoggingChannel']).send('`{}`'.format(loggingMessage))
+		log_id = DiscordChannelIDs.get('LoggingChannel')
+		log_ch = client.get_channel(log_id) if log_id else None
+
+		if log_ch:
+			# send to Discord
+			await log_ch.send(f'`{loggingMessage}`')
+		else:
+			# fallback to console if channel not found
+			print(f"⚠️ LoggingChannel ({log_id}) not found, message was: {loggingMessage}")
+
 
 	for text in texts:
 		command=text[0].replace(' ','')
@@ -200,7 +218,7 @@ async def mainProbius(client,message,texts):
 		if command in colourAliases:
 			await message.channel.send(file=discord.File('WS colours.png'))
 			continue
-		if message.author.id==DiscordUserIDs['Asddsa'] or message.author.id==DiscordUserIDs['MindHawk']:
+		if message.author.id==DiscordUserIDs['Asddsa'] or message.author.id==DiscordUserIDs['MindHawk'] or message.author.id==160743140901388288:
 			if command=='serverchannels':
 				await message.channel.send([channel.name for channel in message.channel.guild.channels])
 				continue
@@ -454,21 +472,78 @@ class MyClient(discord.Client):
 		self.welcomeMessage=''
 		self.botChannels=botChannels
 
+	async def should_suppress_actions(self):
+		for guild in self.guilds:
+			for user_id in SUPPRESS_USER_IDS:
+				member = guild.get_member(user_id)
+				if member and str(member.status) in ("online", "idle", "dnd"):
+					return True
+		return False
+
+	async def suppression_status_loop(self):
+		"""Background task to update bot status based on suppression state."""
+		last_state = None
+		await self.wait_until_ready()
+		while not self.is_closed():
+			suppressed = await self.should_suppress_actions()
+			if suppressed != last_state:
+				if suppressed:
+					await self.change_presence(status=discord.Status.dnd)
+					print("Suppression active: Bot set to idle.")
+				else:
+					await self.change_presence(status=discord.Status.online)
+					print("Suppression inactive: Bot set to online.")
+				last_state = suppressed
+			await asyncio.sleep(15)  # check every 15 seconds, or longer if you prefer
+
 	async def on_ready(self):
 		print('Logged on...')
+		self.loop.create_task(self.suppression_status_loop())
 		print('Downloading heroes...')
 		await downloadAll(self,argv)
 		print('Fetching proxy emojis...')
-		self.proxyEmojis=await getProxyEmojis(client.get_guild(603924426769170433))
+		guild = client.get_guild(603924426769170433)
+		if guild is None:
+			print("WARNING: Guild with ID 603924426769170433 not found. Skipping emoji proxy setup.")
+			self.proxyEmojis = {}
+		else:
+			self.proxyEmojis = await getProxyEmojis(guild)
 		print('Filling up with Reddit posts...')
 		self.forwardedPosts=[]
 		self.seenTitles=await fillPreviousPostTitles(self)#Fills seenTitles with all current titles
+		print("Bot is in these guilds:")
+		for g in client.guilds:
+			print(f"{g.name} ({g.id})")
 		self.ready=True
 		print('Ready!')
-		self.rulesChannel=self.get_channel(DiscordChannelIDs['ServerRules'])#server-rules
-		self.welcomeMessage='Please read '+self.rulesChannel.mention+' and type here your **`Region`, `Rank`, and `Preferred Colour`**, separated by commas, to get sorted and unlock the rest of the channels <:OrphAYAYA:657172520092565514>'
+#		self.rulesChannel=self.get_channel(DiscordChannelIDs['ServerRules'])#server-rules
+#		self.welcomeMessage='Please read '+self.rulesChannel.mention+' and type here your **`Region`, `Rank`, and `Preferred Colour`**, separated by commas, to get sorted and unlock the rest of the channels <:OrphAYAYA:657172520092565514>'
+		if self.rulesChannel is not None:
+			self.welcomeMessage = (
+				'Please read ' + self.rulesChannel.mention +
+				' and type here your **`Region`, `Rank`, and `Preferred Colour`**, separated by commas, to get sorted and unlock the rest of the channels <:OrphAYAYA:657172520092565514>'
+			)
+		else:
+			self.welcomeMessage = (
+				'Welcome! Please read the rules channel and type here your **`Region`, `Rank`, and `Preferred Colour`**, separated by commas, to get sorted and unlock the rest of the channels <:OrphAYAYA:657172520092565514>'
+			)
+			print("WARNING: rulesChannel not found; welcomeMessage uses fallback text.")
+
 
 	async def on_message(self, message):
+		print(f"Received: {message.content} from {message.author} (channel: {message.channel})")
+		## Repeat command for Probius (moldy) - Not suppressed
+		if '[' in message.content:
+			for txt in findTexts(message):
+				command = txt[0].replace(' ', '')
+				if command == 'mepeat' and len(txt) == 2:
+					# Repeat the message, then optionally delete the original (like [repeat])
+					await message.channel.send(message.content.split('[')[1].split('/')[1].split(']')[0])
+					await message.delete()
+					return
+		if await self.should_suppress_actions():
+			return
+		await super().on_message(message) if hasattr(super(), "on_message") else None
 		for i in char:
 			if message.author.id==i[0] and time.time()-i[2]>300 and message.channel.guild.id==535256944106012694:#5 minutes since last reaction
 				i[2]=time.time()
@@ -513,7 +588,10 @@ class MyClient(discord.Client):
 		if message.author.id==0:#Birthday cake
 			await message.add_reaction('🍰')
 		
-	async def on_message_edit(self,before, after):
+	async def on_message_edit(self, before, after):
+		if await self.should_suppress_actions():
+			return
+		await super().on_message_edit(before, after) if hasattr(super(), "on_message_edit") else None
 		#Don't respond to ourselves
 		if after.embeds and after.channel.id==DiscordChannelIDs['General'] and 'New dev tweet!' in after.content:#Message with embed in #general
 			await after.channel.send(after.embeds[0].thumbnail.url)
@@ -542,7 +620,10 @@ class MyClient(discord.Client):
 				await asyncio.sleep(10)
 				await message.delete()
 
-	async def on_raw_reaction_add(self,payload):
+	async def on_raw_reaction_add(self, payload):
+		if await self.should_suppress_actions():
+			return
+		await super().on_raw_reaction_add(payload) if hasattr(super(), "on_raw_reaction_add") else None
 		member=client.get_user(payload.user_id)
 		if member.id==DiscordUserIDs['Probius']:#Probius did reaction
 			return
@@ -600,7 +681,10 @@ class MyClient(discord.Client):
 		if member.id in ProbiusPrivilegesIDs:#Reaction copying
 			await message.add_reaction(payload.emoji)
 
-	async def on_raw_reaction_remove(self,payload):
+	async def on_raw_reaction_remove(self, payload):
+		if await self.should_suppress_actions():
+			return
+		await super().on_raw_reaction_remove(payload) if hasattr(super(), "on_raw_reaction_remove") else None
 		member=client.get_user(payload.user_id)
 		try:
 			message=await client.get_channel(payload.channel_id).fetch_message(payload.message_id)
@@ -617,6 +701,9 @@ class MyClient(discord.Client):
 				await removeLfgRoles(member,self)
 
 	async def on_member_join(self,member):
+		if await self.should_suppress_actions():
+			return
+		await super().on_member_join(payload) if hasattr(super(), "on_member_join") else None
 		guild=member.guild
 		if guild.name=='Wind Striders':
 			'''if str(member.created_at)[:10]=='2022-05-28':#Banning every account created during listed date
@@ -637,6 +724,9 @@ class MyClient(discord.Client):
 			self.lastWelcomeImage.append(await channel.send('https://cdn.discordapp.com/attachments/576018992624435220/743917827718905896/sorting.gif'))
 
 	async def on_member_remove(self,member):
+		if await self.should_suppress_actions():
+			return
+		await super().on_member_remove(payload) if hasattr(super(), "on_member_remove") else None
 		guild=member.guild
 		if guild.name=='Wind Striders':
 			unsorted=guild.get_role(DiscordRoleIDs['Unsorted'])
@@ -653,6 +743,9 @@ class MyClient(discord.Client):
 			await removePokedex(self,member.id)
 
 	async def bgTaskSubredditForwarding(self):
+		if await self.should_suppress_actions():
+			return
+		await super().bgTaskSubredditForwarding(payload) if hasattr(super(), "bgTaskSubredditForwarding") else None
 		await self.wait_until_ready()
 		channel = self.get_channel(DiscordChannelIDs['General'])#WS general
 		while not self.is_closed():
@@ -663,6 +756,9 @@ class MyClient(discord.Client):
 				pass
 
 	async def on_member_update(self,before,after):
+		if await self.should_suppress_actions():
+			return
+		await super().on_member_update(payload) if hasattr(super(), "on_member_update") else None
 		if after.guild.id==DiscordGuildIDs['WindStriders']:
 			core=after.guild.get_role(DiscordRoleIDs['CoreMember'])
 			olympian=after.guild.get_role(DiscordRoleIDs['Olympian'])
@@ -689,6 +785,7 @@ while not exitBool: #Restart
 	exitBool=1
 	intents = discord.Intents.default()  # All but the two privileged ones
 	intents.members = True  # Subscribe to the Members intent
+	intents.presences = True 
 
 	asyncio.set_event_loop(asyncio.new_event_loop())
 	client = MyClient(command_prefix='!', intents=intents)
