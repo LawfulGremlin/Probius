@@ -228,7 +228,6 @@
         "icon": "storm_ui_icon_zeratul_mightofnerazim.png",
         "type": "Heroic",
         "sort": 1,
-        "cooldown": 20,
         "abilityId": "Zeratul|R1",
         "abilityLinks": [
           "Zeratul|R1"
