@@ -76,7 +76,7 @@ coachingAliases=['coach', 'coaching', 'coachingsession']
 randomBuildAliases=['randombuild','rb','randb','randbuild','randomb']
 
 SUPPRESS_USER_IDS = [
-	603924594956435491,  # Probius
+	DiscordUserIDs['Probius'],  # Probius
 #	786255199069143101,  # GuineaPig
 ]
 
@@ -218,7 +218,7 @@ async def mainProbius(client,message,texts):
 		if command in colourAliases:
 			await message.channel.send(file=discord.File('WS colours.png'))
 			continue
-		if message.author.id==DiscordUserIDs['Asddsa'] or message.author.id==DiscordUserIDs['MindHawk'] or message.author.id==160743140901388288:
+		if message.author.id==DiscordUserIDs['Asddsa'] or message.author.id==DiscordUserIDs['MindHawk'] or message.author.id==DiscordUserIDs['medimold']:
 			if command=='serverchannels':
 				await message.channel.send([channel.name for channel in message.channel.guild.channels])
 				continue
@@ -551,7 +551,7 @@ class MyClient(discord.Client):
 		if ('@everyone' in message.content or '@here' in message.content) and message.guild.id==535256944106012694:
 			await message.add_reaction('<:LEVEL2AAAA:923294790278324315>')
 		await iAmName(message)
-		pingNames={'medicake':DiscordUserIDs['Medicake'],'libraries':224975834346291210, 'twinkles':410481791204327424}
+		pingNames={'medimold':DiscordUserIDs['medimold'],'libraries':224975834346291210, 'twinkles':410481791204327424}
 		pingList=[pingNames[i] for i in pingNames.keys() if '@'+i in message.content.replace(' ','').lower()]
 		if pingList:
 			await message.channel.send(' '.join(['<@'+str(i)+'>' for i in pingList]))

@@ -3,13 +3,14 @@ DiscordUserIDs={
     'MindHawk':129702871837966336,
     'SomeoneNew':247677408386351105,
     'Blackstorm':329447886465138689,
-    'Medicake':160743140901388288,
+    'medimold':160743140901388288,
     'Gooey':190529178808877056,
     'Probius':603924594956435491,
     'Spazzo':84805890837864448,
     'Derenash':191410663292272640,
     'MBee':364041091693150208,
     'Weebatsu':408114527947980802,
+	'Probius':603924594956435491,
 }
 
 ProbiusPrivilegesIDs=[DiscordUserIDs['Asddsa']]
