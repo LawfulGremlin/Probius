@@ -145,7 +145,7 @@
         "tooltipId": "LucioSoundwaveSubwoofer",
         "talentTreeId": "LucioSoundwaveSubwoofer",
         "name": "Subwoofer",
-        "description": "Enemies within the first half of Soundwave's range are knocked back -100% further.  Quest: Hit 3 enemy Heroes with a single Soundwave.  Reward: Increase Soundwave's arc by 50% and its range by 20%.",
+        "description": "Enemies within the first half of Soundwave's range are knocked back 75% further.  Quest: Hit 3 enemy Heroes with a single Soundwave.  Reward: Increase Soundwave's arc by 50% and its range by 20%.",
         "icon": "storm_ui_icon_lucio_soundwave.png",
         "type": "Q",
         "sort": 1,

@@ -147,7 +147,7 @@
         "tooltipId": "TyraelRighteousnessReciprocateTalent",
         "talentTreeId": "TyraelMasteryRighteousnessReciprocate",
         "name": "Reciprocate",
-        "description": "When Tyrael's Shield from Righteousness expires or is destroyed, it deals 190 (+4% per level) damage to nearby Heroes and Summons.  For each enemy Hero damaged by Reciprocate or El'Druin's Might, Tyreal heals for 3% of his maximum Health.",
+        "description": "When Tyrael's Shield from Righteousness expires or is destroyed, it deals 190 (+4% per level) damage to nearby Heroes and Summons.  For each enemy Hero damaged by Reciprocate or El'Druin's Might, Tyrael heals for 3% of his maximum Health.",
         "icon": "storm_ui_icon_tyrael_righteousness.png",
         "type": "W",
         "sort": 2,
