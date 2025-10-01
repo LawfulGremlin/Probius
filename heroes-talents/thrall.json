@@ -199,10 +199,10 @@
         "abilityId": "Thrall|Active"
       },
       {
-        "tooltipId": "GenericFollowThroughTalent",
-        "talentTreeId": "GenericTalentFollowThrough",
-        "name": "Follow Through",
-        "description": "After using an Ability, your next Basic Attack within 6 seconds deals 40% additional damage.",
+        "tooltipId": "ThrallElementalAssault",
+        "talentTreeId": "ThrallElementalAssault",
+        "name": "Elemental Assault",
+        "description": "After using an Ability, Thrall's next Basic Attack within 4 seconds deals 45% more damage.",
         "icon": "storm_ui_icon_talent_autoattack_damage.png",
         "type": "Passive",
         "sort": 3,

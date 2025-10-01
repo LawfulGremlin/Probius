@@ -292,7 +292,7 @@
         "tooltipId": "LeoricSpectralLeechTalent",
         "talentTreeId": "LeoricMasterySpectralLeech",
         "name": "Spectral Leech",
-        "description": "Basic Attacks against enemy Heroes deal bonus damage equal to 2.5% of the Hero's maximum Health and heal Leoric for twice that amount.",
+        "description": "Basic Attacks against enemy Heroes deal bonus damage to the primary target damage equal 2.5% of the Hero's maximum Health and heal Leoric for 200% of the bonus damage dealt.",
         "icon": "storm_ui_icon_talent_autoattack_heal.png",
         "type": "Passive",
         "sort": 3,

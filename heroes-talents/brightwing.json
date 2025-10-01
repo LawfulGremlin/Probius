@@ -257,7 +257,7 @@
         "tooltipId": "BrightwingPixieBoostTalent",
         "talentTreeId": "BrightwingPixieBoostPixieDust",
         "name": "Pixie Boost",
-        "description": "Pixie Dust gives 50% bonus Movement Speed, decaying to 20% over 3 seconds.",
+        "description": "Increase Pixie Dust's Movement Speed bonus to 50%, decaying to 20% over 3 seconds.",
         "icon": "storm_ui_icon_brightwing_pixiedust.png",
         "type": "E",
         "sort": 1,

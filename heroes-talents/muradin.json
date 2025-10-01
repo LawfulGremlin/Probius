@@ -94,7 +94,7 @@
         "tooltipId": "MuradinStormboltPerfectStormTalent",
         "talentTreeId": "MuradinStormboltPerfectStorm",
         "name": "Perfect Storm",
-        "description": "Quest: Every time Muradin hits an enemy Hero with a Basic Attack, increase Storm Bolt's damage by 0.75. If an enemy Hero is killed within 3 seconds of being hit by a Storm Bolt increase its damage by an additional 10.",
+        "description": "Repeatable Quest: Basic Attacks against enemy Heroes permanently increases Storm Bolt's damage by 0.75.  Repeatable Quest: If an enemy Hero is killed within 3 seconds of being hit by a Storm Bolt, permanently increase its damage by 10.",
         "icon": "storm_ui_icon_muradin_stormbolt.png",
         "type": "Q",
         "sort": 1,

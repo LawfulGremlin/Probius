@@ -92,10 +92,10 @@
       {
         "uid": "253126",
         "name": "Brushstalker",
-        "description": "Activate to burrow to a bush on the Battleground.  Passive: Gain 20% movement speed while in a bush and for 2 seconds after leaving.",
+        "description": "Activate to burrow to a bush on the Battleground.  Passive: Gain 20% movement speed while in a bush and for 2 seconds after leaving.  Passive: Gathering a Regeneration Globe reduces the cooldown of Brushstalker by 40 seconds.",
         "hotkey": "Z",
         "abilityId": "Dehaka|Z1",
-        "cooldown": 75,
+        "cooldown": 240,
         "icon": "storm_ui_icon_dehaka_mount.png",
         "type": "mount"
       }
@@ -386,7 +386,7 @@
         "tooltipId": "DehakaBrushstalkerApexPredatorTalent",
         "talentTreeId": "DehakaBrushstalkerApexPredator",
         "name": "Apex Predator",
-        "description": "Reduces Brushstalker's cooldown by 50 seconds and the cast time by 0.5 seconds.",
+        "description": "Reduces Brushstalker's cooldown by 0##ERROR## seconds and the cast time by 0.5 seconds.",
         "icon": "storm_ui_icon_dehaka_brushstalker.png",
         "type": "Z",
         "sort": 4,

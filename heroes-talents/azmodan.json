@@ -359,10 +359,11 @@
         "tooltipId": "AzmodanPride",
         "talentTreeId": "AzmodanPride",
         "name": "Pride",
-        "description": "After gaining 400 Annihilation, the area of Globe of Annihilation is increased by 15% and it deals 125 additional damage.",
+        "description": "Quest: Gain 400 stacks of Annihilation.  Reward: After gaining 400 Annihilation, the area of Globe of Annihilation is increased by 15% and it deals 125 additional damage.",
         "icon": "storm_ui_icon_azmodan_globeofannihilation.png",
         "type": "Q",
         "sort": 3,
+        "isQuest": true,
         "abilityId": "Azmodan|Q1",
         "abilityLinks": [
           "Azmodan|Q1"
