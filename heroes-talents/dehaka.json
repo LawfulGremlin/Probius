@@ -386,7 +386,7 @@
         "tooltipId": "DehakaBrushstalkerApexPredatorTalent",
         "talentTreeId": "DehakaBrushstalkerApexPredator",
         "name": "Apex Predator",
-        "description": "Reduces Brushstalker's cooldown by 0##ERROR## seconds and the cast time by 0.5 seconds.",
+        "description": "Reduces Brushstalker's cooldown by 120 seconds and the cast time by 0.5 seconds.",
         "icon": "storm_ui_icon_dehaka_brushstalker.png",
         "type": "Z",
         "sort": 4,

@@ -212,7 +212,7 @@
         "tooltipId": "ZaryaDeepBurn",
         "talentTreeId": "ZaryaDeepBurn",
         "name": "Deep Burn",
-        "description": "Hitting a Hero with Particle Grenade causes Basic Attacks against them to generate 0 Energy. Lasts 4 seconds.",
+        "description": "Hitting a Hero with Particle Grenade causes Basic Attacks against them to generate 2 Energy. Lasts 4 seconds.",
         "icon": "storm_ui_icon_zarya_particlegrenade_a.png",
         "type": "Q",
         "sort": 2,

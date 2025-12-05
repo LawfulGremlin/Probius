@@ -145,7 +145,7 @@
         "tooltipId": "BrightwingDreamShotTalent",
         "talentTreeId": "BrightwingDreamShotArcaneFlare",
         "name": "Dream Shot",
-        "description": "Increase Arcane Flare's range by 50%. Hitting a Hero with Arcane Flare's center reduces its cooldown to 2 seconds.",
+        "description": "Increase Arcane Flare's range by 60%. Hitting a Hero with Arcane Flare's center reduces its cooldown to 2 seconds.",
         "icon": "storm_ui_icon_brightwing_arcaneflare.png",
         "type": "Q",
         "sort": 1,

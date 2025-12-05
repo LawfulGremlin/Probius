@@ -70,7 +70,7 @@
       {
         "uid": "8aee91",
         "name": "Mind Control",
-        "description": "After 0.25 seconds, fire a missile that Mind Controls the first enemy Hero hit. Heroes hit are Silenced, Slowed by 30%, have 3 stacks of Banshee's Curse applied to them, and are forced to walk towards Sylvanas for 1.75 seconds.",
+        "description": "After 0.25 seconds, fire a missile that Mind Controls the first enemy Hero hit. Heroes hit are Silenced, Slowed by 30%, have 3 stacks of Black Arrows applied to them, and are forced to walk towards Sylvanas for 1.75 seconds.",
         "hotkey": "R",
         "abilityId": "Sylvanas|R2",
         "cooldown": 40,
@@ -81,13 +81,23 @@
       {
         "uid": "019b21",
         "name": "Black Arrows",
-        "description": "Activate to cause all Basic Attacks and Abilities to Stun Minions, non-Elite Mercenaries, and Structures for 3 seconds. Lasts for 10 seconds.  Banshee's Curse  Basic Attacks infect enemies with Banshee's Curse for 3 seconds, stacking up to 3 times. Deal 25% more damage to enemies with 3 stacks.",
+        "description": "Basic Attacks infect enemies with Black Arrows for 3 seconds, stacking up to 3 times. Sylvanas deals 15% more damage to enemies with 3 stacks.  Quest: Damage Heroes and Structures with 3 stacks of Black Arrows.  Reward: Upon damaging enemies 250 times, increase the damage bonus provided by Black Arrows to 50%.  Pinnacle Reward: Upon damaging enemies 400 times, Black Arrows now heals Sylvanas for 25% of damage dealt at 3 stacks, doubled against Heroes.",
         "hotkey": "D",
         "trait": true,
         "abilityId": "Sylvanas|D1",
-        "cooldown": 40,
+        "cooldown": 90,
         "icon": "storm_ui_icon_sylvanas_blackarrows.png",
         "type": "trait"
+      },
+      {
+        "uid": "b1682a",
+        "name": "Possession",
+        "description": "Activate to force an enemy Minion to fight for Sylvanas's team. Catapults require 3 charges. Stores up to 4 charges.",
+        "hotkey": "1",
+        "abilityId": "Sylvanas|11",
+        "cooldown": 25,
+        "icon": "storm_ui_icon_sylvanas_possession.png",
+        "type": "activable"
       }
     ]
   },
@@ -107,14 +117,13 @@
         ]
       },
       {
-        "tooltipId": "SylvanasShadowDaggerUnfurlingShadows",
-        "talentTreeId": "SylvanasUnfurlingShadowsShadowDagger",
-        "name": "Unfurling Shadows",
-        "description": "Quest: Each time an enemy Hero with 3 stacks of Banshee's Curse is hit by Shadow Dagger, its damage is permanently increased by 0.5%.",
+        "tooltipId": "SylvanasUnrelentingTorment",
+        "talentTreeId": "SylvanasUnrelentingTorment",
+        "name": "Unrelenting Torment",
+        "description": "Increase the damage of Shadow Dagger by 20% and increase its duration by 1 second.",
         "icon": "storm_ui_icon_sylvanas_shadowdagger.png",
         "type": "W",
         "sort": 2,
-        "isQuest": true,
         "abilityId": "Sylvanas|W1",
         "abilityLinks": [
           "Sylvanas|W1"
@@ -124,7 +133,7 @@
         "tooltipId": "SylvanasBlackArrowsOverwhelmingAfflictionTalent",
         "talentTreeId": "SylvanasTalentOverwhelmingAffliction",
         "name": "Overwhelming Affliction",
-        "description": "Enemy Heroes with 3 stacks of Banshee's Curse are Slowed by 15%. Sylvanas's Basic Attacks against Slowed enemy Heroes deal 1% of their maximum Health as damage.",
+        "description": "Enemy Heroes with 3 stacks of Black Arrows are Slowed by 15%. Sylvanas's Basic Attacks against Slowed enemy Heroes deal 1% of their maximum Health as damage.",
         "icon": "storm_ui_icon_sylvanas_blackarrows.png",
         "type": "Trait",
         "sort": 3,
@@ -152,7 +161,7 @@
         "tooltipId": "SylvanasMercenaryQueenTalent",
         "talentTreeId": "SylvanasTalentMercenaryQueen",
         "name": "Mercenary Queen",
-        "description": "Friendly non-Elite Mercenaries near Sylvanas deal 60% more damage. Sylvanas Stuns and deals 30% additional damage to Mercenaries with 3 stacks of Banshee's Curse.",
+        "description": "Friendly non-Elite Mercenaries near Sylvanas deal 60% more damage. Sylvanas Stuns and deals 30% additional damage to Mercenaries with 3 stacks of Black Arrows.",
         "icon": "storm_ui_icon_sylvanas_blackarrows.png",
         "type": "Trait",
         "sort": 2,
@@ -162,15 +171,18 @@
         ]
       },
       {
-        "tooltipId": "SylvanasPossession",
-        "talentTreeId": "SylvanasHeroicAbilityPossession",
-        "name": "Possession",
-        "description": "Activate to force an enemy Minion to fight for Sylvanas's team. Catapults require 3 charges. Stores up to 3 charges.",
-        "icon": "storm_ui_icon_sylvanas_possession.png",
-        "type": "Active",
+        "tooltipId": "SylvanasBlackArrowsHauntingArrowsTalent",
+        "talentTreeId": "SylvanasHauntingArrows",
+        "name": "Haunting Arrows",
+        "description": "Black Arrows can now be activated to cause all Basic Attacks and Abilities to Stun Minions, non-Elite Mercenaries, and Structures for 3 seconds. Lasts for 10 seconds. Basic Attacks against Structures reduce this cooldown by 3 seconds.",
+        "icon": "storm_ui_icon_sylvanas_blackarrows_b.png",
+        "type": "Trait",
         "sort": 3,
-        "cooldown": 12,
-        "abilityId": "Sylvanas|Active"
+        "cooldown": 90,
+        "abilityId": "Sylvanas|D1",
+        "abilityLinks": [
+          "Sylvanas|D1"
+        ]
       }
     ],
     "7": [
@@ -178,7 +190,7 @@
         "tooltipId": "SylvanasWitheringFireBarbedShotTalent",
         "talentTreeId": "SylvanasTalentWitheringFireBarbedShot",
         "name": "Barbed Shot",
-        "description": "Hitting the same enemy with 5 shots of Withering Fire causes the 5th shot to deal 350% bonus damage.",
+        "description": "Hitting the same enemy with 5 shots of Withering Fire causes the 5th shot to deal 400% bonus damage.",
         "icon": "storm_ui_icon_sylvanas_witheringfire.png",
         "type": "Q",
         "sort": 1,
@@ -191,7 +203,7 @@
         "tooltipId": "SylvanasShadowDaggerLostSoulTalent",
         "talentTreeId": "SylvanasTalentLostSoul",
         "name": "Lost Soul",
-        "description": "Increase Shadow Dagger's damage by 10%. Basic Attacks against Heroes with 3 stacks of Banshee's Curse reduce the cooldown of Shadow Dagger by 1.75 seconds.",
+        "description": "Basic Attacks against Heroes and Structures with 3 stacks of Black Arrows reduce the cooldown of Shadow Dagger by 0.75 seconds, doubled against Heroes.  Passive: Shadow Dagger deals 10% more damage.",
         "icon": "storm_ui_icon_sylvanas_shadowdagger.png",
         "type": "W",
         "sort": 2,
@@ -204,7 +216,7 @@
         "tooltipId": "SylvanasBlackArrowsFesteringWounds",
         "talentTreeId": "SylvanasTalentFesteringWounds",
         "name": "Festering Wounds",
-        "description": "Increase Haunting Wave's damage by 15%. Haunting Wave applies 3 stacks of Banshee's Curse.",
+        "description": "Increase Haunting Wave's damage by 15%. Haunting Wave applies 3 stacks of Black Arrows.",
         "icon": "storm_ui_icon_sylvanas_hauntingwave.png",
         "type": "E",
         "sort": 3,
@@ -233,7 +245,7 @@
         "tooltipId": "SylvanasMindControlMissile",
         "talentTreeId": "SylvanasMindControl",
         "name": "Mind Control",
-        "description": "After 0.25 seconds, fire a missile that Mind Controls the first enemy Hero hit. Heroes hit are Silenced, Slowed by 30%, have 3 stacks of Banshee's Curse applied to them, and are forced to walk towards Sylvanas for 1.75 seconds.",
+        "description": "After 0.25 seconds, fire a missile that Mind Controls the first enemy Hero hit. Heroes hit are Silenced, Slowed by 30%, have 3 stacks of Black Arrows applied to them, and are forced to walk towards Sylvanas for 1.75 seconds.",
         "icon": "storm_ui_icon_sylvanas_mindcontrol.png",
         "type": "Heroic",
         "sort": 2,
@@ -262,7 +274,7 @@
         "tooltipId": "SylvanasHauntingWaveWindrunnerTalent",
         "talentTreeId": "SylvanasTalentWindrunnerHauntingWave",
         "name": "Windrunner",
-        "description": "Haunting Wave can be cast a second time for free within 5 seconds after teleporting. Teleporting with Haunting Wave resets the cooldown of Withering Fire.",
+        "description": "Haunting Wave can be cast a second time for free within 4 seconds after teleporting. Teleporting with Haunting Wave resets the cooldown of Withering Fire.",
         "icon": "storm_ui_icon_sylvanas_hauntingwave.png",
         "type": "E",
         "sort": 2,
@@ -275,10 +287,14 @@
         "tooltipId": "SylvanasRemorselessTalent",
         "talentTreeId": "SylvanasTalentRemorseless",
         "name": "Remorseless",
-        "description": "Increase Sylvanas's Basic Attack range by 1. Sylvanas's Basic Attacks against enemy Heroes with 3 stacks of Banshee's Curse shoot an untalented shot of Withering Fire. This shot of Withering Fire applies Banshee's Curse.",
+        "description": "Sylvanas's Basic Attacks against enemy Heroes with 3 stacks of Black Arrows shoot an untalented shot of Withering Fire. This shot of Withering Fire applies Black Arrows.  Increase Sylvanas's Basic Attack range by 1.",
         "icon": "storm_ui_icon_sylvanas_blackarrows.png",
         "type": "Trait",
-        "sort": 3
+        "sort": 3,
+        "abilityId": "Sylvanas|D1",
+        "abilityLinks": [
+          "Sylvanas|D1"
+        ]
       }
     ],
     "16": [
@@ -299,7 +315,7 @@
         "tooltipId": "SylvanasBlackArrowsLifeDrainTalent",
         "talentTreeId": "SylvanasTalentLifeDrain",
         "name": "Life Drain",
-        "description": "Heal for 15% of damage dealt by Sylvanas to enemies with 3 stacks of Banshee's Curse. Healing is doubled against Heroes.",
+        "description": "Heal for 15% of damage dealt by Sylvanas to enemies with 3 stacks of Black Arrows. Healing is doubled against Heroes.",
         "icon": "storm_ui_icon_sylvanas_blackarrows.png",
         "type": "Trait",
         "sort": 2,
@@ -351,7 +367,7 @@
         "tooltipId": "SylvanasWitheringFireWitheringBarrage",
         "talentTreeId": "SylvanasTalentWitheringBarrage",
         "name": "Withering Barrage",
-        "description": "Withering Fire applies Banshee's Curse, and Heroes hit by Withering Fire reduce its cooldown by 0.75 seconds.",
+        "description": "Withering Fire applies Black Arrows, and Heroes hit by Withering Fire reduce its cooldown by 0.75 seconds.",
         "icon": "storm_ui_icon_sylvanas_witheringfire.png",
         "type": "Q",
         "sort": 3,

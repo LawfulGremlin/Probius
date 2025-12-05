@@ -106,7 +106,7 @@
         "tooltipId": "UtherHolyLightSilverTouch",
         "talentTreeId": "UtherHolyLightSilverTouch",
         "name": "Silver Touch",
-        "description": "Quest: Reduce damage from Heroic sources with Devotion.  Reward: After reducing damage 40 times, Holy Light's Mana cost is reduced from 80 to 0##ERROR##.  Reward: After reducing damage 80 times, Holy Light's Mana cost is reduced to 0##ERROR##, and its range is increased by 50%.",
+        "description": "Quest: Reduce damage from Heroic sources with Devotion.  Reward: After reducing damage 40 times, Holy Light's Mana cost is reduced from 80 to 60.  Reward: After reducing damage 80 times, Holy Light's Mana cost is reduced to 40, and its range is increased by 50%.",
         "icon": "storm_ui_icon_uther_holylight.png",
         "type": "Q",
         "sort": 1,
@@ -215,7 +215,7 @@
         "tooltipId": "UtherHandOfProtection",
         "talentTreeId": "UtherHandOfProtection",
         "name": "Hand of Protection",
-        "description": "Activate to make target ally Unstoppable for 1 second. Cannot be cast on Uther. Basic Attacks reduce Hand of Protection's cooldown by -1 seconds.",
+        "description": "Activate to make target ally Unstoppable for 1 second. Cannot be cast on Uther. Basic Attacks reduce Hand of Protection's cooldown by 5 seconds.",
         "icon": "storm_ui_icon_talent_cleanse.png",
         "type": "Active",
         "sort": 3,
@@ -326,7 +326,7 @@
         "icon": "storm_ui_icon_uther_benediction.png",
         "type": "Active",
         "sort": 3,
-        "cooldown": 1,
+        "cooldown": 60,
         "abilityId": "Uther|Active"
       }
     ],

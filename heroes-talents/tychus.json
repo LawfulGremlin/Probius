@@ -23,7 +23,7 @@
       {
         "uid": "96407f",
         "name": "Overkill",
-        "description": "Deal 552 (+4% per level) damage to the target and 276 (+4% per level) damage to nearby targets over 4 seconds. Reactivate to select a new target. Can move and use Abilities while Channeling.",
+        "description": "Deal 552 (+4% per level) damage to the target and 276 (+4% per level) damage to nearby targets over 4 seconds. Reactivate to select a new target or direction. Can move and use Abilities while Channeling.",
         "hotkey": "Q",
         "abilityId": "Tychus|Q1",
         "cooldown": 12,
@@ -126,7 +126,7 @@
         "tooltipId": "TychusFragGrenadeQuarterbackTalent",
         "talentTreeId": "TychusMasteryQuarterback",
         "name": "Quarterback",
-        "description": "Increases Frag Grenade's damage by 10% and its range by 50%.",
+        "description": "Increases Frag Grenade's damage by 10% and its range by 45%.",
         "icon": "storm_ui_icon_tychus_fraggrenade.png",
         "type": "W",
         "sort": 1,

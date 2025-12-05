@@ -95,7 +95,7 @@
         "tooltipId": "KaelthasFlamestrikeConvectionTalent",
         "talentTreeId": "KaelthasFlamestrikeConvection",
         "name": "Convection",
-        "description": "Quest: Damaging an enemy Hero with Flamestrike increase its damage by 5, up to 100. This bonus is lost on death.  Reward: After hitting 20 enemy Heroes, increase Flamestrike damage by an additional 100 and no longer lose any bonuses on death.",
+        "description": "Repeatable Quest: Hit 20 enemy Heroes with Flamestrike without dying.  Repeatable Reward: Permanently increases Flamestrike damage by 150, and Kael'thas's maximum Health by 50.",
         "icon": "storm_ui_icon_kaelthas_flamestrike.png",
         "type": "Q",
         "sort": 1,
