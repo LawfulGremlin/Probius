@@ -121,7 +121,7 @@
         "tooltipId": "ThrallMaelstromWeapon",
         "talentTreeId": "ThrallMaelstromWeapon",
         "name": "Maelstrom Weapon",
-        "description": "Quest: Basic Attack Heroes while Windfury's Movement Speed bonus is active.  Reward: After hitting 20 Heroes, increase the Movement Speed bonus of Windfury to 40% and Thrall's Basic Attacks deal 40 additional damage.  Reward: After hitting 40 Heroes, Thrall permanently gains 15% increased Movement Speed and his Basic Attacks gain an additional 75 damage.  Pinnacle Reward: After hitting 100 Heroes, Frostwolf Resilience healing restores 200% more Health.",
+        "description": "Quest: Basic Attack Heroes while Windfury's Movement Speed bonus is active.  Reward: After hitting 25 Heroes, increase the Movement Speed bonus of Windfury to 40% and Thrall's Basic Attacks deal 40 additional damage.  Reward: After hitting 55 Heroes, Thrall permanently gains 15% increased Movement Speed and his Basic Attacks gain an additional 75 damage.  Pinnacle Reward: After hitting 100 Heroes, Frostwolf Resilience healing restores 200% more Health.",
         "icon": "storm_ui_icon_thrall_windfury.png",
         "type": "E",
         "sort": 3,

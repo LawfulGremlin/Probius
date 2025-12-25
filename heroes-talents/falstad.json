@@ -35,7 +35,7 @@
       {
         "uid": "fbe0b2",
         "name": "Lightning Rod",
-        "description": "Deal 107 (+4% per level) damage to an enemy, and an additional 75 (+4% per level) damage per second for 4 seconds while close to the target. Deals 100% increased damage to Minions and Mercenaries.",
+        "description": "Deal 107 (+4% per level) damage to an enemy, and an additional 75 (+4% per level) damage every 0.8 seconds for 4 seconds while close to the target. Deals 100% increased damage to Minions and Mercenaries.",
         "hotkey": "W",
         "abilityId": "Falstad|W1",
         "cooldown": 12,
@@ -132,11 +132,11 @@
         "tooltipId": "FalstadTailwindFrequentFlyer",
         "talentTreeId": "FalstadTailwindFrequentFlyer",
         "name": "Frequent Flyer",
-        "description": "Activate Frequent Flyer to gain 25% Attack Speed and Tailwind for 4 seconds.  Quest: Minion kills grant 1 stack. Hero Takedowns grant 5 stacks.  Reward: After 50 stacks, gain 20 Attack Damage.  Reward: After 125 stacks, gain 50 additional Attack Damage.  Pinnacle Reward: After 300 stacks, gain 125 additional Attack Damage.",
+        "description": "Activate Frequent Flyer to gain 25% Attack Speed and Tailwind for 4 seconds.  Quest: Minion kills grant 1 stack. Hero Takedowns grant 5 stacks.  Reward: After 60 stacks, gain 20 Attack Damage.  Reward: After 150 stacks, gain 50 additional Attack Damage.  Pinnacle Reward: After 300 stacks, gain 125 additional Attack Damage.",
         "icon": "storm_ui_icon_falstad_tailwind_a.png",
         "type": "Active",
         "sort": 3,
-        "cooldown": 45,
+        "cooldown": 60,
         "isQuest": true,
         "abilityId": "Falstad|Active"
       }
