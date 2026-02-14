@@ -452,7 +452,7 @@ class MyClient(discord.Client):
 		self.seenTitles=[]
 		self.seenPosts=[]
 		self.forwardedPosts=[]
-		self.proxyEmojis={}
+#		self.proxyEmojis={}
 		# create the background task and run it in the background
 		self.bgTask0 = self.loop.create_task(self.bgTaskSubredditForwarding())
 		self.heroPages={}
@@ -501,13 +501,13 @@ class MyClient(discord.Client):
 		self.loop.create_task(self.suppression_status_loop())
 		print('Downloading heroes...')
 		await downloadAll(self,argv)
-		print('Fetching proxy emojis...')
-		guild = client.get_guild(603924426769170433)
-		if guild is None:
-			print("WARNING: Guild with ID 603924426769170433 not found. Skipping emoji proxy setup.")
-			self.proxyEmojis = {}
-		else:
-			self.proxyEmojis = await getProxyEmojis(guild)
+#		print('Fetching proxy emojis...')
+#		guild = client.get_guild(603924426769170433)
+#		if guild is None:
+#			print("WARNING: Guild with ID 603924426769170433 not found. Skipping emoji proxy setup.")
+#			self.proxyEmojis = {}
+#		else:
+#			self.proxyEmojis = await getProxyEmojis(guild)
 		print('Filling up with Reddit posts...')
 		self.forwardedPosts=[]
 		self.seenTitles=await fillPreviousPostTitles(self)#Fills seenTitles with all current titles
