@@ -747,17 +747,16 @@ class MyClient(discord.Client):
 			await removePokedex(self,member.id)
 
 	async def bgTaskSubredditForwarding(self):
-		if await self.should_suppress_actions():
-			return
-		await super().bgTaskSubredditForwarding(payload) if hasattr(super(), "bgTaskSubredditForwarding") else None
 		await self.wait_until_ready()
-		channel = self.get_channel(DiscordChannelIDs['General'])#WS general
 		while not self.is_closed():
-			await asyncio.sleep(60)#Check for new posts every minute
+			if await self.should_suppress_actions():
+				await asyncio.sleep(60)
+				continue
 			try:
 				await redditForwarding(self)
-#			except:
-#				pass
+			except Exception as e:
+				print(f"ERROR in bgTaskSubredditForwarding: {e}")
+			await asyncio.sleep(60)#Check for new posts every minute
 
 	async def on_member_update(self,before,after):
 		if await self.should_suppress_actions():
