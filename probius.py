@@ -901,19 +901,6 @@ class MyClient(discord.Client):
 				print(f"ERROR in bgTaskBlizztrackVersionCheck: {e}")
 			await asyncio.sleep(300)
 
-
-	async def bgTaskBlizztrackVersionCheck(self):
-		await self.wait_until_ready()
-		while not self.is_closed():
-			if await self.should_suppress_actions():
-				await asyncio.sleep(300)
-				continue
-			try:
-				await self.check_blizztrack_versions()
-			except Exception as e:
-				print(f"ERROR in bgTaskBlizztrackVersionCheck: {e}")
-			await asyncio.sleep(300)
-
 	async def check_blizztrack_versions(self):
 		current_versions=await get_blizztrack_versions()
 		if not current_versions:
