@@ -161,7 +161,7 @@ async def mainProbius(client,message,texts):
 		if command in versionAliases:
 			with open('hversion.txt', 'r', encoding='utf-8') as version_file:
 				version = version_file.read().strip()
-			await message.channel.send('Probius is updated with Version: '+version)
+			await message.channel.send('Probius is based on game version '+version)
 			continue
 		if command in confidenceAliases:
 			await confidence(message.channel,text)
