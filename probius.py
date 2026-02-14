@@ -901,6 +901,19 @@ class MyClient(discord.Client):
 				print(f"ERROR in bgTaskBlizztrackVersionCheck: {e}")
 			await asyncio.sleep(300)
 
+
+	async def bgTaskBlizztrackVersionCheck(self):
+		await self.wait_until_ready()
+		while not self.is_closed():
+			if await self.should_suppress_actions():
+				await asyncio.sleep(300)
+				continue
+			try:
+				await self.check_blizztrack_versions()
+			except Exception as e:
+				print(f"ERROR in bgTaskBlizztrackVersionCheck: {e}")
+			await asyncio.sleep(300)
+
 	async def check_blizztrack_versions(self):
 		current_versions=await get_blizztrack_versions()
 		if not current_versions:
@@ -912,13 +925,13 @@ class MyClient(discord.Client):
 			write_blizztrack_version_state(current_versions)
 			return
 
-		secret_cabal_channel=self.get_channel(DiscordChannelIDs['SecretCabal'])
-		if secret_cabal_channel is None:
+		probius_channel=self.get_channel(DiscordChannelIDs['Probius'])
+		if probius_channel is None:
 			self.blizztrackVersionState=current_versions
 			write_blizztrack_version_state(current_versions)
 			return
 
-	for track_key,track_data in current_versions.items():
+		for track_key,track_data in current_versions.items():
 			previous_track=previous_state.get(track_key,{})
 			previous_regions=previous_track.get('regions',{}) if isinstance(previous_track,dict) else {}
 			for region,current_version in track_data.get('regions',{}).items():
@@ -927,8 +940,10 @@ class MyClient(discord.Client):
 					await probius_channel.send(
 						f"update detected on {track_key} from {prior_version} to {current_version} in region {region}."
 					)
-	self.blizztrackVersionState=current_versions
-	write_blizztrack_version_state(current_versions)
+
+		self.blizztrackVersionState=current_versions
+		write_blizztrack_version_state(current_versions)
+
 
 	'''async def on_user_update(self, before, after):#If a core member changes their pfp
 		if before.avatar!=after.avatar:
