@@ -756,8 +756,8 @@ class MyClient(discord.Client):
 			await asyncio.sleep(60)#Check for new posts every minute
 			try:
 				await redditForwarding(self)
-			except:
-				pass
+#			except:
+#				pass
 
 	async def on_member_update(self,before,after):
 		if await self.should_suppress_actions():
