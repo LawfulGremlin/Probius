@@ -95,7 +95,7 @@
         "tooltipId": "KaelthasFlamestrikeConvectionTalent",
         "talentTreeId": "KaelthasFlamestrikeConvection",
         "name": "Convection",
-        "description": "Repeatable Quest: Hit 20 enemy Heroes with Flamestrike without dying.  Repeatable Reward: Permanently increases Flamestrike damage by 150, and Kael'thas's maximum Health by 50.",
+        "description": "Repeatable Quest: Hit 20 enemy Heroes with Flamestrike without dying.  Repeatable Reward: Permanently increases Flamestrike damage by 200, and Kael'thas's maximum Health by 100.",
         "icon": "storm_ui_icon_kaelthas_flamestrike.png",
         "type": "Q",
         "sort": 1,

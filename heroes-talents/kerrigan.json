@@ -23,7 +23,7 @@
       {
         "uid": "9c5dff",
         "name": "Ravage",
-        "description": "Leap to a target, dealing 115 (+4% per level) damage. If the enemy dies within 1.5 seconds, restore 1 charge and refund 20 Mana.  Quest: Kill enemies within 1.5 seconds of being hit by Ravage. Minions grant 1 stack and Heroes grant 7 stacks.  Reward: After reaching 85 stacks, Ravage deals 125 additional damage.  Pinnacle Reward: After reaching a 150 stacks, Ravage deals a further 200 additional damage.",
+        "description": "Leap to a target, dealing 115 (+4% per level) damage. If the enemy dies within 0.8 seconds, restore 1 charge and refund 20 Mana.  Quest: Kill enemies within a short distance of Kerrigan. Minions grant 1 stack and Heroes grant 7 stacks.  Reward: After reaching 100 stacks, Ravage deals 125 additional damage and Hero kills now provide 14 stacks.  Mythic Reward: After reaching a 250 stacks, Ravage deals a further 200 additional damage.",
         "hotkey": "Q",
         "abilityId": "Kerrigan|Q1",
         "cooldown": 8,
