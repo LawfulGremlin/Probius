@@ -876,8 +876,8 @@ class MyClient(discord.Client):
 				await self.get_channel(DiscordChannelIDs['SecretCabal']).send('Welcome '+after.mention+'!')
 			if olympian in after.roles and olympian not in before.roles:
 				await self.get_channel(DiscordChannelIDs['Pepega']).send('Welcome '+after.mention+'!')
+				
 	async def bgTaskSubredditForwarding(self):
-	
 		await self.wait_until_ready()
 		while not self.is_closed():
 			if await self.should_suppress_actions():
