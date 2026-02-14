@@ -551,7 +551,7 @@ class MyClient(discord.Client):
 		if ('@everyone' in message.content or '@here' in message.content) and message.guild.id==535256944106012694:
 			await message.add_reaction('<:LEVEL2AAAA:923294790278324315>')
 		await iAmName(message)
-		pingNames={'medimold':DiscordUserIDs['medimold'],'libraries':224975834346291210, 'twinkles':410481791204327424}
+		pingNames={'medimold':DiscordUserIDs['medimold'],'libraries':DiscordUserIDs['libraries'], 'twinkles':DiscordUserIDs['twinkles'']}
 		pingList=[pingNames[i] for i in pingNames.keys() if '@'+i in message.content.replace(' ','').lower()]
 		if pingList:
 			await message.channel.send(' '.join(['<@'+str(i)+'>' for i in pingList]))
@@ -567,9 +567,13 @@ class MyClient(discord.Client):
 					await message.channel.send('@everyone '+output)
 					await self.get_channel(222817241249480704).send(output)
 			except:pass
-		if message.author.id==DiscordUserIDs['Gooey'] and 'explodes' in message.content.lower():
-			await message.add_reaction('<:explodes:955458830244913153>')
-			#await message.channel.send('https://cdn.discordapp.com/attachments/741762417976934460/954076412590063646/unknown.png')
+		if message.author.id==DiscordUserIDs['Gooey']:
+			if 'explod' in message.content.lower():
+				await message.add_reaction('<:explodes:955458830244913153>')
+				#await message.channel.send('https://cdn.discordapp.com/attachments/741762417976934460/954076412590063646/unknown.png')
+			if 'a'==message.content.lower():
+				await message.add_reaction("🅰")
+				#await message.channel.send("https://cdn.discordapp.com/attachments/607922629902598154/1150784393762316288/A.mp4")
 		if message.author.bot:#Don't respond to bots
 			return
 		try:

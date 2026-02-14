@@ -11,6 +11,8 @@ DiscordUserIDs={
     'MBee':364041091693150208,
     'Weebatsu':408114527947980802,
 	'Probius':603924594956435491,
+	'libraries':22497583434629121,
+	'twinkles':410481791204327424
 }
 
 ProbiusPrivilegesIDs=[DiscordUserIDs['Asddsa']]
