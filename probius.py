@@ -927,9 +927,8 @@ class MyClient(discord.Client):
 					await probius_channel.send(
 						f"update detected on {track_key} from {prior_version} to {current_version} in region {region}."
 					)
-
-		self.blizztrackVersionState=current_versions
-		write_blizztrack_version_state(current_versions)
+	self.blizztrackVersionState=current_versions
+	write_blizztrack_version_state(current_versions)
 
 	'''async def on_user_update(self, before, after):#If a core member changes their pfp
 		if before.avatar!=after.avatar:
