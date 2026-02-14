@@ -483,7 +483,8 @@ def find_highest_version(version_names):
 	return sorted(cleaned, key=parse_version_key)[-1]
 
 async def fetch_text(session,url):
-	async with session.get(url,timeout=30) as response:
+	headers={'User-Agent':'ProbiusBot/1.0'}
+	async with session.get(url,timeout=30,headers=headers) as response:
 		if response.status!=200:
 			raise RuntimeError(f'BlizzTrack request failed for {url} with status {response.status}')
 		return await response.text()
@@ -513,6 +514,9 @@ async def fetch_blizztrack_track_versions(session,track_key):
 		f'https://blizztrack.com/api/{view_name}?type=versions',
 		f'https://blizztrack.com/api/v1/{view_name}?type=versions',
 		f'https://blizztrack.com/api/view/{view_name}?type=versions',
+		f'https://blizztrack.com/api/{view_name}/versions',
+		f'https://blizztrack.com/api/v1/{view_name}/versions',
+
 	]
 	for url in api_urls:
 		try:
@@ -525,7 +529,19 @@ async def fetch_blizztrack_track_versions(session,track_key):
 			pass
 
 	from bs4 import BeautifulSoup
-	html=await fetch_text(session,f'https://blizztrack.com/view/{view_name}?type=versions')
+	html_urls=[
+		f'https://blizztrack.com/view/{view_name}?type=versions',
+		f'https://blizztrack.com/view/{view_name}/versions',
+	]
+	html=None
+	for url in html_urls:
+		try:
+			html=await fetch_text(session,url)
+			break
+		except Exception:
+			pass
+	if html is None:
+		return {}
 	soup=BeautifulSoup(html,'html.parser')
 	region_versions={}
 	for row in soup.find_all('tr'):
@@ -598,6 +614,17 @@ class MyClient(discord.Client):
 				if member and str(member.status) in ("online", "idle", "dnd"):
 					return True
 		return False
+		
+
+	def blizztrack_summary_lines(self,current_versions):
+		lines=[]
+		for track_key in BLIZZTRACK_TRACKS:
+			track_data=current_versions.get(track_key,{}) if isinstance(current_versions,dict) else {}
+			current_version=track_data.get('current','unknown') if isinstance(track_data,dict) else 'unknown'
+			region_versions=track_data.get('regions',{}) if isinstance(track_data,dict) else {}
+			regions=', '.join([f"{region}: {version}" for region,version in sorted(region_versions.items())]) if region_versions else 'none found'
+			lines.append(f"{track_key}: {current_version} ({regions})")
+		return lines
 
 	async def suppression_status_loop(self):
 		"""Background task to update bot status based on suppression state."""
@@ -634,6 +661,7 @@ class MyClient(discord.Client):
 		for g in client.guilds:
 			print(f"{g.name} ({g.id})")
 		self.ready=True
+		await self.check_blizztrack_versions(announce_if_first_run=True)
 		print('Ready!')
 #		self.rulesChannel=self.get_channel(DiscordChannelIDs['ServerRules'])#server-rules
 #		self.welcomeMessage='Please read '+self.rulesChannel.mention+' and type here your **`Region`, `Rank`, and `Preferred Colour`**, separated by commas, to get sorted and unlock the rest of the channels <:OrphAYAYA:657172520092565514>'
@@ -901,15 +929,18 @@ class MyClient(discord.Client):
 				print(f"ERROR in bgTaskBlizztrackVersionCheck: {e}")
 			await asyncio.sleep(300)
 
-	async def check_blizztrack_versions(self):
+	async def check_blizztrack_versions(self,announce_if_first_run=False):
 		current_versions=await get_blizztrack_versions()
 		if not current_versions:
 			return
 
 		previous_state=self.blizztrackVersionState if isinstance(self.blizztrackVersionState,dict) else {}
+		probius_channel=self.get_channel(DiscordChannelIDs['Probius'])
 		if not previous_state:
 			self.blizztrackVersionState=current_versions
 			write_blizztrack_version_state(current_versions)
+			if announce_if_first_run and probius_channel is not None:
+				await probius_channel.send('blizztrack initial versions: '+' | '.join(self.blizztrack_summary_lines(current_versions)))
 			return
 
 		probius_channel=self.get_channel(DiscordChannelIDs['Probius'])
