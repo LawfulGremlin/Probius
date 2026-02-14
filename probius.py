@@ -74,6 +74,7 @@ confidenceAliases=['ci','confidence','confidenceinterval']
 heroAliases=['hero', 'heroes', 'bruiser', 'healer', 'support', 'ranged', 'melee', 'assassin', 'mage', 'marksman', 'tank', 'marksmen']
 coachingAliases=['coach', 'coaching', 'coachingsession']
 randomBuildAliases=['randombuild','rb','randb','randbuild','randomb']
+versionAliases=['version']
 
 SUPPRESS_USER_IDS = [
 	DiscordUserIDs['Probius'],  # Probius
@@ -156,6 +157,11 @@ async def mainProbius(client,message,texts):
 			continue
 		if command=='membercount':
 			await memberCount(message.channel)
+			continue
+		if command in versionAliases:
+			with open('hversion.txt', 'r', encoding='utf-8') as version_file:
+				version = version_file.read().strip()
+			await message.channel.send('Probius is updated with Version: '+version)
 			continue
 		if command in confidenceAliases:
 			await confidence(message.channel,text)
