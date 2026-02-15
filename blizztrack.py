@@ -8,12 +8,19 @@ from bs4 import BeautifulSoup
 
 LOGGER = logging.getLogger(__name__)
 
+# Track keys -> BlizzTrack tact codes
 BLIZZTRACK_TRACKS = {
-    'live': 'hero',
-    'test': 'herot',
+    'live': 'hero',   # Heroes of the Storm (live)
+    'test': 'herot',  # Heroes of the Storm (PTR)
 }
 
-KNOWN_REGIONS = {'EU', 'NA', 'KR', 'CN', 'ASIA', 'LATAM', 'SEA'}
+# Regions as they appear on BlizzTrack "view" pages and in the manifest API.
+# HotS currently uses US/EU/CN/KR/TW/SG.
+KNOWN_REGIONS = {
+    'US', 'EU', 'CN', 'KR', 'TW', 'SG',
+    # Legacy / other-game labels we’ve seen in older BlizzTrack scrapes.
+    'NA', 'ASIA', 'LATAM', 'SEA',
+}
 
 
 class BlizztrackService:
@@ -45,32 +52,63 @@ class BlizztrackService:
 
     @staticmethod
     def parse_blizztrack_regions(payload):
-        region_versions = {}
-        if isinstance(payload, dict):
-            if isinstance(payload.get('regions'), dict):
-                for region, data in payload['regions'].items():
-                    if isinstance(data, dict):
-                        region_versions[str(region).upper()] = data.get('name') or data.get('version') or data.get('build')
-            for key in ['data', 'results', 'versions']:
-                value = payload.get(key)
-                if isinstance(value, list):
-                    for entry in value:
-                        if not isinstance(entry, dict):
-                            continue
-                        region = entry.get('region') or entry.get('regionName') or entry.get('code')
-                        version_name = entry.get('name') or entry.get('version') or entry.get('build')
-                        if region and version_name:
-                            region_versions[str(region).upper()] = version_name
+        """Extract a {REGION: version_name} mapping from a BlizzTrack API payload.
+
+        Current BlizzTrack manifest API shape (documented):
+          /api/manifest/{tact}/versions
+          {"success": true, "result": {"data": [{"region": "us", "version_name": "2.55..."}, ...]}}
+        """
+        region_versions: Dict[str, str] = {}
+
+        if not isinstance(payload, dict):
+            return {}
+
+        # ✅ New/current manifest API shape
+        result = payload.get('result')
+        if isinstance(result, dict) and isinstance(result.get('data'), list):
+            for entry in result['data']:
+                if not isinstance(entry, dict):
+                    continue
+                region = entry.get('region') or entry.get('code')
+                version_name = entry.get('version_name') or entry.get('versionName')
+                if region and version_name:
+                    region_versions[str(region).upper()] = str(version_name)
+
+        # Older/alternate shapes (kept for resilience)
+        if isinstance(payload.get('regions'), dict):
+            for region, data in payload['regions'].items():
+                if isinstance(data, dict):
+                    region_versions[str(region).upper()] = data.get('name') or data.get('version') or data.get('build')
+
+        for key in ['data', 'results', 'versions']:
+            value = payload.get(key)
+            if isinstance(value, list):
+                for entry in value:
+                    if not isinstance(entry, dict):
+                        continue
+                    region = entry.get('region') or entry.get('regionName') or entry.get('code')
+                    version_name = (
+                        entry.get('version_name')
+                        or entry.get('versionName')
+                        or entry.get('name')
+                        or entry.get('version')
+                        or entry.get('build')
+                    )
+                    if region and version_name:
+                        region_versions[str(region).upper()] = str(version_name)
+
         return {region: version for region, version in region_versions.items() if version}
 
     async def fetch_track_versions(self, session, track_key):
-        view_name = self.tracks[track_key]
+        tact = self.tracks[track_key]
+
+        # BlizzTrack’s current documented API for versions manifests.
+        # Docs: GET /api/manifest/{tact}/versions (optional ?seqn=...)
         api_urls = [
-            f'https://blizztrack.com/api/{view_name}?type=versions',
-            f'https://blizztrack.com/api/v1/{view_name}?type=versions',
-            f'https://blizztrack.com/api/view/{view_name}?type=versions',
-            f'https://blizztrack.com/api/{view_name}/versions',
-            f'https://blizztrack.com/api/v1/{view_name}/versions',
+            f'https://blizztrack.com/api/manifest/{tact}/versions',
+            # Back-compat attempts (older scrapers used these; keep just in case)
+            f'https://blizztrack.com/api/{tact}?type=versions',
+            f'https://blizztrack.com/api/{tact}/versions',
         ]
 
         api_failures = []
@@ -86,11 +124,17 @@ class BlizztrackService:
                 api_failures.append(f'{url} -> {exc}')
 
         if api_failures:
-            LOGGER.warning('Blizztrack API attempts failed for %s (%s tries). First failure: %s', track_key, len(api_failures), api_failures[0])
+            LOGGER.warning(
+                'Blizztrack API attempts failed for %s (%s tries). First failure: %s',
+                track_key,
+                len(api_failures),
+                api_failures[0],
+            )
 
+        # HTML fallback (works even if API changes/breaks)
         html_urls = [
-            f'https://blizztrack.com/view/{view_name}?type=versions',
-            f'https://blizztrack.com/view/{view_name}/versions',
+            f'https://blizztrack.com/view/{tact}?type=versions',
+            f'https://blizztrack.com/view/{tact}/versions',
         ]
         html = None
         html_failures = []
@@ -104,21 +148,41 @@ class BlizztrackService:
 
         if html is None:
             if html_failures:
-                LOGGER.warning('Blizztrack HTML fallback attempts failed for %s (%s tries). First failure: %s', track_key, len(html_failures), html_failures[0])
+                LOGGER.warning(
+                    'Blizztrack HTML fallback attempts failed for %s (%s tries). First failure: %s',
+                    track_key,
+                    len(html_failures),
+                    html_failures[0],
+                )
             LOGGER.warning('No Blizztrack data available for track %s', track_key)
             return {}
 
         soup = BeautifulSoup(html, 'html.parser')
+
+        # BlizzTrack "view" pages are list/section based.
+        # Parse the "Current Data" section and pick the first version-looking token
+        # after each region code.
+        text = soup.get_text('\n', strip=True)
+        if 'Current Data' in text:
+            text = text.split('Current Data', 1)[1]
+        if 'Previous Data' in text:
+            text = text.split('Previous Data', 1)[0]
+
+        lines = [line.strip() for line in text.splitlines() if line.strip()]
         region_versions = {}
-        for row in soup.find_all('tr'):
-            columns = [column.get_text(strip=True) for column in row.find_all(['td', 'th'])]
-            if len(columns) < 2:
+        version_re = re.compile(r'^\d+(?:\.\d+){2,6}$')
+
+        for i, line in enumerate(lines):
+            region = line.upper()
+            if region not in KNOWN_REGIONS:
                 continue
-            for index in range(len(columns) - 1):
-                region = columns[index].upper()
-                version_name = columns[index + 1]
-                if region in KNOWN_REGIONS and version_name:
-                    region_versions[region] = version_name
+
+            # Search forward a bit for a version string.
+            for j in range(i + 1, min(i + 25, len(lines))):
+                candidate = lines[j]
+                if version_re.match(candidate):
+                    region_versions[region] = candidate
+                    break
 
         if not region_versions:
             LOGGER.warning('Blizztrack HTML parse produced no regions for %s', track_key)
