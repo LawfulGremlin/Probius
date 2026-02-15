@@ -105,7 +105,7 @@ async def fetch(session, url):
 		return await response.text()
 
 async def titleTrim(title):#Don't remove spaces because of Cho
-	a={'_':'\_','&amp;':'&'}
+	a={'_':'\\_','&amp;':'&'}
 	for i in a.keys():
 		title=title.replace(i,a[i])
 	return title

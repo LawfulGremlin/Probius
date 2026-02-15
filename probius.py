@@ -228,11 +228,11 @@ async def mainProbius(client,message,texts):
 			continue
 		if command in [':summon','summon']:
 			if len(text)==1:
-				await message.channel.send('༼ つ ◕\_◕ ༽つ')
+				await message.channel.send('༼ つ ◕\\_◕ ༽つ')
 			elif '@' in text[1]:
-				await message.channel.send('{0} {0} Summon {1}! {0} {0}'.format('༼ つ ◕\_◕ ༽つ', message.author.mention))
+				await message.channel.send('{0} {0} Summon {1}! {0} {0}'.format('༼ つ ◕\\_◕ ༽つ', message.author.mention))
 			else:
-				await message.channel.send('{0} {0} Summon {1}! {0} {0}'.format('༼ つ ◕\_◕ ༽つ', message.content.split('[')[1].split('/')[1].split(']')[0]))#text[1] is all lowercase etc.
+				await message.channel.send('{0} {0} Summon {1}! {0} {0}'.format('༼ つ ◕\\_◕ ༽つ', message.content.split('[')[1].split('/')[1].split(']')[0]))#text[1] is all lowercase etc.
 			continue
 		if command in colourAliases:
 			await message.channel.send(file=discord.File('WS colours.png'))
@@ -455,8 +455,8 @@ def findTexts(message):
 	for text in wholeText.split('\n'):
 		if '>' == text[0]:#This line is a quote
 			continue
-		leftBrackets=[1+m.start() for m in re.finditer('\[',text)]#Must escape brackets when using regex
-		rightBrackets=[m.start() for m in re.finditer('\]',text)]
+		leftBrackets=[1+m.start() for m in re.finditer(r'\[',text)]#Must escape brackets when using regex
+		rightBrackets=[m.start() for m in re.finditer(r'\]',text)]
 		texts=[text[leftBrackets[i]:rightBrackets[i]].split('/') for i in range(len(rightBrackets))]
 		if len(leftBrackets)>len(rightBrackets):#One extra unclosed at end
 			texts.append(text[leftBrackets[-1]:].split('/'))
@@ -842,7 +842,7 @@ class MyClient(discord.Client):
 				if prior_version and prior_version!=current_version:
 					logging.info('Blizztrack update detected: track=%s region=%s from=%s to=%s',track_key,region,prior_version,current_version)
 					await probius_channel.send(
-						f"update detected on {track_key} from {prior_version} to {current_version} in region {region}."
+						f"update detected on {track_key} from {prior_version} to {current_version} in region {region}. <@&892852776877568010>"
 					)
 
 		self.blizztrackVersionState=current_versions

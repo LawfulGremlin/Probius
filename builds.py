@@ -39,8 +39,8 @@ def updateBuilds():
 	with open('Text files/elitesparkleBuilds.txt','w+') as f:
 		for hero in getHeroes():
 			hero=aliases(hero).lower().replace('_','-').replace('.','').replace("'","")
-			heropage=page[page.index('builds\/'+hero):]
-			code=heropage[heropage.index('-'):heropage.index('\/"')]
+			heropage=page[page.index('builds/'+hero):]
+			code=heropage[heropage.index('-'):heropage.index('/"')]
 			output='https://psionic-storm.com/en/builds/'+hero+code+'\n'
 			print(output)
 			f.write(output)
