@@ -6,10 +6,8 @@
 
 import asyncio
 import io
-import aiohttp
 import re
 import random
-import json
 import discord
 import time
 from sys import argv#Where to get the JSONs
@@ -33,6 +31,7 @@ from patchNotes import *
 from lfg import *
 from maps import *
 from discordIDs import *
+from blizztrack import BlizztrackMonitor
 #from imageColour import *
 
 import logging
@@ -81,12 +80,6 @@ SUPPRESS_USER_IDS = [
 	DiscordUserIDs['Probius'],  # Probius
 #	786255199069143101,  # GuineaPig
 ]
-
-BLIZZTRACK_VERSION_STATE_FILE='blizztrack_versions.json'
-BLIZZTRACK_TRACKS={
-	'live':'hero',
-	'test':'herot',
-}
 
 async def mainProbius(client,message,texts):
 	global exitBool
@@ -168,17 +161,22 @@ async def mainProbius(client,message,texts):
 		if command in versionAliases:
 			with open('hversion.txt', 'r', encoding='utf-8') as version_file:
 				version = version_file.read().strip()
-			blizztrack_versions = await get_blizztrack_versions()
+			blizztrack_versions = await client.blizztrackMonitor.get_versions()
 			if blizztrack_versions is None:
 				live_version='unknown'
 				test_version='unknown'
 			else:
 				live_version=blizztrack_versions.get('live',{}).get('current','unknown')
 				test_version=blizztrack_versions.get('test',{}).get('current','unknown')
+			health_checks=client.blizztrackMonitor.validate_versions(blizztrack_versions)
+			health_summary='\n'.join([
+				f"{name}: {'ok' if passed else 'fail'}" for name,passed in health_checks
+			])
 			await message.channel.send(
 				'Current live version: '+live_version+'\n'
 				+'Current test version: '+test_version+'\n'
-				+'Probius is version: '+version
+				+'Probius is version: '+version+'\n'
+				+'BlizzTrack health checks:\n'+health_summary
 			)
 			continue
 		if command in confidenceAliases:
@@ -468,115 +466,6 @@ def findTexts(message):
 		allTexts+=texts
 	return allTexts
 
-def parse_version_key(version_name):
-	if not version_name:
-		return ()
-	numbers = re.findall(r'\d+', str(version_name))
-	if numbers:
-		return tuple(int(number) for number in numbers)
-	return (str(version_name).lower(),)
-
-def find_highest_version(version_names):
-	cleaned=[version_name for version_name in version_names if version_name]
-	if not cleaned:
-		return None
-	return sorted(cleaned, key=parse_version_key)[-1]
-
-async def fetch_text(session,url):
-	headers={'User-Agent':'ProbiusBot/1.0'}
-	async with session.get(url,timeout=30,headers=headers) as response:
-		if response.status!=200:
-			raise RuntimeError(f'BlizzTrack request failed for {url} with status {response.status}')
-		return await response.text()
-
-def parse_blizztrack_regions(payload):
-	region_versions={}
-	if isinstance(payload,dict):
-		if isinstance(payload.get('regions'),dict):
-			for region,data in payload['regions'].items():
-				if isinstance(data,dict):
-					region_versions[str(region).upper()]=data.get('name') or data.get('version') or data.get('build')
-		for key in ['data','results','versions']:
-			value=payload.get(key)
-			if isinstance(value,list):
-				for entry in value:
-					if not isinstance(entry,dict):
-						continue
-					region=entry.get('region') or entry.get('regionName') or entry.get('code')
-					version_name=entry.get('name') or entry.get('version') or entry.get('build')
-					if region and version_name:
-						region_versions[str(region).upper()]=version_name
-	return {region:version for region,version in region_versions.items() if version}
-
-async def fetch_blizztrack_track_versions(session,track_key):
-	view_name=BLIZZTRACK_TRACKS[track_key]
-	api_urls=[
-		f'https://blizztrack.com/api/{view_name}?type=versions',
-		f'https://blizztrack.com/api/v1/{view_name}?type=versions',
-		f'https://blizztrack.com/api/view/{view_name}?type=versions',
-		f'https://blizztrack.com/api/{view_name}/versions',
-		f'https://blizztrack.com/api/v1/{view_name}/versions',
-
-	]
-	for url in api_urls:
-		try:
-			text=await fetch_text(session,url)
-			payload=json.loads(text)
-			region_versions=parse_blizztrack_regions(payload)
-			if region_versions:
-				return region_versions
-		except Exception:
-			pass
-
-	from bs4 import BeautifulSoup
-	html_urls=[
-		f'https://blizztrack.com/view/{view_name}?type=versions',
-		f'https://blizztrack.com/view/{view_name}/versions',
-	]
-	html=None
-	for url in html_urls:
-		try:
-			html=await fetch_text(session,url)
-			break
-		except Exception:
-			pass
-	if html is None:
-		return {}
-	soup=BeautifulSoup(html,'html.parser')
-	region_versions={}
-	for row in soup.find_all('tr'):
-		columns=[column.get_text(strip=True) for column in row.find_all(['td','th'])]
-		if len(columns)<2:
-			continue
-		for index in range(len(columns)-1):
-			region=columns[index].upper()
-			version_name=columns[index+1]
-			if region in ['EU','NA','KR','CN','ASIA','LATAM','SEA'] and version_name:
-				region_versions[region]=version_name
-	return region_versions
-
-async def get_blizztrack_versions():
-	async with aiohttp.ClientSession() as session:
-		results={}
-		for track_key in BLIZZTRACK_TRACKS:
-			region_versions=await fetch_blizztrack_track_versions(session,track_key)
-			results[track_key]={
-				'regions':region_versions,
-				'current':find_highest_version(region_versions.values()) or 'unknown'
-			}
-		return results
-
-def read_blizztrack_version_state():
-	try:
-		with open(BLIZZTRACK_VERSION_STATE_FILE,'r',encoding='utf-8') as version_file:
-			return json.load(version_file)
-	except Exception:
-		return {}
-
-def write_blizztrack_version_state(state):
-	with open(BLIZZTRACK_VERSION_STATE_FILE,'w',encoding='utf-8') as version_file:
-		json.dump(state,version_file,indent=2,sort_keys=True)
-
 #char=[[247677408386351105,'<:GoToChar:793111041046609951>',time.time()],[129702871837966336,'<:tww2:793399028611285022>',time.time()]]#[ID, emoji, time]
 char=[]
 class MyClient(discord.Client):
@@ -605,7 +494,7 @@ class MyClient(discord.Client):
 		self.rulesChannel=None
 		self.welcomeMessage=''
 		self.botChannels=botChannels
-		self.blizztrackVersionState=read_blizztrack_version_state()
+		self.blizztrackMonitor=BlizztrackMonitor()
 
 	async def should_suppress_actions(self):
 		for guild in self.guilds:
@@ -615,16 +504,6 @@ class MyClient(discord.Client):
 					return True
 		return False
 		
-
-	def blizztrack_summary_lines(self,current_versions):
-		lines=[]
-		for track_key in BLIZZTRACK_TRACKS:
-			track_data=current_versions.get(track_key,{}) if isinstance(current_versions,dict) else {}
-			current_version=track_data.get('current','unknown') if isinstance(track_data,dict) else 'unknown'
-			region_versions=track_data.get('regions',{}) if isinstance(track_data,dict) else {}
-			regions=', '.join([f"{region}: {version}" for region,version in sorted(region_versions.items())]) if region_versions else 'none found'
-			lines.append(f"{track_key}: {current_version} ({regions})")
-		return lines
 
 	async def suppression_status_loop(self):
 		"""Background task to update bot status based on suppression state."""
@@ -930,23 +809,29 @@ class MyClient(discord.Client):
 			await asyncio.sleep(300)
 
 	async def check_blizztrack_versions(self,announce_if_first_run=False):
-		current_versions=await get_blizztrack_versions()
+		current_versions=await self.blizztrackMonitor.get_versions()
 		if not current_versions:
+			logging.warning('BlizzTrack check failed: no data returned')
 			return
+		for check_name,passed in self.blizztrackMonitor.validate_versions(current_versions):
+			if not passed:
+				logging.warning('BlizzTrack health check failed: %s', check_name)
+			else:
+				logging.info('BlizzTrack health check passed: %s', check_name)
 
-		previous_state=self.blizztrackVersionState if isinstance(self.blizztrackVersionState,dict) else {}
+		previous_state=self.blizztrackMonitor.state if isinstance(self.blizztrackMonitor.state,dict) else {}
 		probius_channel=self.get_channel(DiscordChannelIDs['Probius'])
 		if not previous_state:
-			self.blizztrackVersionState=current_versions
-			write_blizztrack_version_state(current_versions)
+			self.blizztrackMonitor.state=current_versions
+			self.blizztrackMonitor.write_state(current_versions)
 			if announce_if_first_run and probius_channel is not None:
-				await probius_channel.send('blizztrack initial versions: '+' | '.join(self.blizztrack_summary_lines(current_versions)))
+				await probius_channel.send('blizztrack initial versions: '+' | '.join(self.blizztrackMonitor.summary_lines(current_versions)))
 			return
 
 		probius_channel=self.get_channel(DiscordChannelIDs['Probius'])
 		if probius_channel is None:
-			self.blizztrackVersionState=current_versions
-			write_blizztrack_version_state(current_versions)
+			self.blizztrackMonitor.state=current_versions
+			self.blizztrackMonitor.write_state(current_versions)
 			return
 
 		for track_key,track_data in current_versions.items():
@@ -959,8 +844,8 @@ class MyClient(discord.Client):
 						f"update detected on {track_key} from {prior_version} to {current_version} in region {region}."
 					)
 
-		self.blizztrackVersionState=current_versions
-		write_blizztrack_version_state(current_versions)
+		self.blizztrackMonitor.state=current_versions
+		self.blizztrackMonitor.write_state(current_versions)
 
 
 	'''async def on_user_update(self, before, after):#If a core member changes their pfp
