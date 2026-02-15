@@ -785,22 +785,20 @@ class MyClient(discord.Client):
 			if olympian in after.roles and olympian not in before.roles:
 				await self.get_channel(DiscordChannelIDs['Pepega']).send('Welcome '+after.mention+'!')
 				
-    async def bgTaskSubredditForwarding(self):
-        await self.wait_until_ready()
-        # Prevent startup race: don't forward until on_ready finished initialization
-        while not self.ready and not self.is_closed():
-            await asyncio.sleep(1)
-        while not self.is_closed():
-            if await self.should_suppress_actions():
-                await asyncio.sleep(300)
-                continue
-            try:
-                await redditForwarding(self)
-            except Exception as e:
-                print(f"ERROR in bgTaskSubredditForwarding: {e}")
-            await asyncio.sleep(300)#Check for new posts every minute
-
-
+	async def bgTaskSubredditForwarding(self):
+		await self.wait_until_ready()
+		while not self.ready and not self.is_closed():
+			await asyncio.sleep(1)
+		while not self.is_closed():
+			if await self.should_suppress_actions():
+				await asyncio.sleep(60)
+				continue
+			try:
+				await redditForwarding(self)
+			except Exception as e:
+				print(f"ERROR in bgTaskSubredditForwarding: {e}")
+			await asyncio.sleep(60)  # check every minute
+			
 	async def bgTaskBlizztrackVersionCheck(self):
 		await self.wait_until_ready()
 		while not self.is_closed():
