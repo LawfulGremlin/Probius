@@ -30,64 +30,64 @@ keywords={
 
 # --- Restart-only dedupe: scan last N messages in target channels once on startup ---
 REDDIT_ID_RE = re.compile(
-    r'https?://(?:www\.|old\.)?reddit\.com/r/heroesofthestorm/comments/([a-z0-9]+)',
-    re.IGNORECASE
+	r'https?://(?:www\.|old\.)?reddit\.com/r/heroesofthestorm/comments/([a-z0-9]+)',
+	re.IGNORECASE
 )
 
 DISCORD_REDDIT_DEDUPE_CHANNEL_IDS = {
-    DiscordChannelIDs['LoggingChannel'],
-    DiscordChannelIDs['RedditPosts'],
-    DiscordChannelIDs['General'],
-    DiscordChannelIDs['NormieHeroes'],
-    DiscordChannelIDs['Samuro'],
-    222817241249480704,  # special channel used for nexusschoolhouse/Spazzo965 cases
+	DiscordChannelIDs['LoggingChannel'],
+	DiscordChannelIDs['RedditPosts'],
+	DiscordChannelIDs['General'],
+	DiscordChannelIDs['NormieHeroes'],
+	DiscordChannelIDs['Samuro'],
+	222817241249480704,  # special channel used for nexusschoolhouse/Spazzo965 cases
 }
 
 DISCORD_REDDIT_DEDUPE_LIMIT = 50
 
 def _extract_reddit_ids_from_text(text):
-    if not text:
-        return set()
-    return {m.group(1).lower() for m in REDDIT_ID_RE.finditer(text)}
+	if not text:
+		return set()
+	return {m.group(1).lower() for m in REDDIT_ID_RE.finditer(text)}
 
 async def _get_channel(client, channel_id):
-    # cache might be cold right after startup; fetch is more reliable
-    channel = client.get_channel(channel_id)
-    if channel is None:
-        try:
-            channel = await client.fetch_channel(channel_id)
-        except Exception:
-            return None
-    return channel
+	# cache might be cold right after startup; fetch is more reliable
+	channel = client.get_channel(channel_id)
+	if channel is None:
+		try:
+			channel = await client.fetch_channel(channel_id)
+		except Exception:
+			return None
+	return channel
 
 async def prime_recent_discord_reddit_ids(client):
-    """
-    Run ONCE per process start:
-    - scan last DISCORD_REDDIT_DEDUPE_LIMIT messages in each target channel
-    - collect reddit post IDs already present
-    """
-    if getattr(client, "_recent_discord_reddit_ids_primed", False):
-        return
-    client._recent_discord_reddit_ids_primed = True
-    client.recentDiscordRedditIDs = set()
+	"""
+	Run ONCE per process start:
+	- scan last DISCORD_REDDIT_DEDUPE_LIMIT messages in each target channel
+	- collect reddit post IDs already present
+	"""
+	if getattr(client, "_recent_discord_reddit_ids_primed", False):
+		return
+	client._recent_discord_reddit_ids_primed = True
+	client.recentDiscordRedditIDs = set()
 
-    for channel_id in DISCORD_REDDIT_DEDUPE_CHANNEL_IDS:
-        channel = await _get_channel(client, channel_id)
-        if channel is None:
-            LOGGER.warning("prime_recent_discord_reddit_ids: channel %s unavailable", channel_id)
-            continue
+	for channel_id in DISCORD_REDDIT_DEDUPE_CHANNEL_IDS:
+		channel = await _get_channel(client, channel_id)
+		if channel is None:
+			LOGGER.warning("prime_recent_discord_reddit_ids: channel %s unavailable", channel_id)
+			continue
 
-        try:
-            async for msg in channel.history(limit=DISCORD_REDDIT_DEDUPE_LIMIT):
-                client.recentDiscordRedditIDs |= _extract_reddit_ids_from_text(getattr(msg, "content", ""))
-        except Exception as e:
-            # Most common causes: missing "Read Message History" permission
-            LOGGER.warning("prime_recent_discord_reddit_ids: can't read channel %s (%s)", channel_id, e)
+		try:
+			async for msg in channel.history(limit=DISCORD_REDDIT_DEDUPE_LIMIT):
+				client.recentDiscordRedditIDs |= _extract_reddit_ids_from_text(getattr(msg, "content", ""))
+		except Exception as e:
+			# Most common causes: missing "Read Message History" permission
+			LOGGER.warning("prime_recent_discord_reddit_ids: can't read channel %s (%s)", channel_id, e)
 
-    LOGGER.info(
-        "prime_recent_discord_reddit_ids: loaded %d reddit ids from recent history",
-        len(client.recentDiscordRedditIDs)
-    )
+	LOGGER.info(
+		"prime_recent_discord_reddit_ids: loaded %d reddit ids from recent history",
+		len(client.recentDiscordRedditIDs)
+	)
 
 async def getPostInfo(post):
 	title=post.split('", "')[0]
@@ -144,14 +144,14 @@ async def redditForwarding(client):#Called every 60 seconds
 			try:
 				[title,author,url] = await getPostInfo(post)
 			except:continue
-            # Restart-only dedupe
-            reddit_id_match = REDDIT_ID_RE.search(url)
-            if reddit_id_match and hasattr(client, "recentDiscordRedditIDs"):
-                reddit_id = reddit_id_match.group(1).lower()
-                if reddit_id in client.recentDiscordRedditIDs:
-                    if title not in client.seenTitles:
-                        client.seenTitles.append(title)
-                    continue
+			# Restart-only dedupe
+			reddit_id_match = REDDIT_ID_RE.search(url)
+			if reddit_id_match and hasattr(client, "recentDiscordRedditIDs"):
+				reddit_id = reddit_id_match.group(1).lower()
+				if reddit_id in client.recentDiscordRedditIDs:
+					if title not in client.seenTitles:
+						client.seenTitles.append(title)
+					continue
 			if title not in client.seenTitles:#This post hasn't been processed before
 				client.seenTitles.append(title)
 				title=await titleTrim(title)
