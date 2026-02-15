@@ -1,8 +1,11 @@
 import asyncio
 import aiohttp
+import logging
 from rotation import *
 from printFunctions import printLarge
 from discordIDs import *
+
+LOGGER = logging.getLogger(__name__)
 
 redditors=['Asddsa76', 'Blackstar_9', 'Spazzo965', 'SomeoneNew666', 'joshguillen', 'SotheBee', 'AnemoneMeer', 'Pscythic', 'Elitesparkle', 'slapperoni', 
 'secret3332', 'Carrygan_', 'Archlichofthestorm', 'Gnueless', 'ThatDoomedStudent', 'InfiniteEarth', 'SamiSha_', 'twinklesunnysun', 'Pelaberus', 'KillMeWithMemes',
@@ -65,6 +68,14 @@ async def fillPreviousPostTitles(client):#Called on startup
 		return output
 
 async def redditForwarding(client):#Called every 60 seconds
+	async def send_to_channel(channel_id, message):
+		channel = client.get_channel(channel_id)
+		if channel is None:
+			LOGGER.warning('redditForwarding skipped send: channel %s unavailable', channel_id)
+			return False
+		await channel.send(message)
+		return True
+
 	async with aiohttp.ClientSession() as session:
 		page = await fetch(session, 'https://old.reddit.com/r/heroesofthestorm/new.api')
 		posts=page.replace('"is_gallery": true, ','').split('"clicked": false, "title": "')[1:]
@@ -78,11 +89,11 @@ async def redditForwarding(client):#Called every 60 seconds
 				url='\n'+url
 				client.seenPosts.append([title,author,url])
 				if author in redditors or sum(1 for i in keywords if i.lower() in title.lower()) or 'Blizz_' in author:
-					client.forwardedPosts.append([title,author,url])
-					if author=='nexusschoolhouse':
-						await client.get_channel(222817241249480704).send('**{}**: '.format(title)+url)
-					if author=='Spazzo965' and ('CCL' in title or 'Undocumented' in title):
-						await client.get_channel(222817241249480704).send('**{}**: '.format(title)+url)
+					client.forwardedPosts.append([title,author,url])␊
+					if author=='nexusschoolhouse':␊
+						await send_to_channel(222817241249480704, '**{}**: '.format(title)+url)
+					if author=='Spazzo965' and ('CCL' in title or 'Undocumented' in title):␊
+						await send_to_channel(222817241249480704, '**{}**: '.format(title)+url)
 
 					toPing=[]
 					for i in keywords:
@@ -94,18 +105,22 @@ async def redditForwarding(client):#Called every 60 seconds
 					if author in redditors:
 						if author in discordnames:
 							author=discordnames[author]
-						await client.get_channel(DiscordChannelIDs['LoggingChannel']).send('`{} by {}`'.format(title,author))#log
-						await client.get_channel(DiscordChannelIDs['RedditPosts']).send('**{}** by {}: {}'.format(title,author,url))#reddit-posts
+						await send_to_channel(DiscordChannelIDs['LoggingChannel'], '`{} by {}`'.format(title,author))#log
+						await send_to_channel(DiscordChannelIDs['RedditPosts'], '**{}** by {}: {}'.format(title,author,url))#reddit-posts
 						if toPing:
-							await client.get_channel(DiscordChannelIDs['General']).send('**{}** by {}: {}\n{}'.format(title,author,url,toPing))#general
+							await send_to_channel(DiscordChannelIDs['General'], '**{}** by {}: {}\n{}'.format(title,author,url,toPing))#general
 						else:
-							await client.get_channel(DiscordChannelIDs['General']).send('**{}** by {}: {}'.format(title,author,url))#general
+							await send_to_channel(DiscordChannelIDs['General'], '**{}** by {}: {}'.format(title,author,url))#general
 						if author=='Gnueless' and 'rotation' in title.lower():
-							await rotation(client.get_channel(DiscordChannelIDs['General']))
+							general_channel = client.get_channel(DiscordChannelIDs['General'])
+							if general_channel is not None:
+								await rotation(general_channel)
+							else:
+								LOGGER.warning('redditForwarding skipped rotation post: General channel unavailable')
 					else:
-						await client.get_channel(DiscordChannelIDs['LoggingChannel']).send('`{} by {}`'.format(title,author))#log
+						await send_to_channel(DiscordChannelIDs['LoggingChannel'], '`{} by {}`'.format(title,author))#log
 						channel=[DiscordChannelIDs['NormieHeroes'],DiscordChannelIDs['Samuro']]['samuro' in title.lower()]#Normie-heroes or Samuro
-						await client.get_channel(channel).send('**{}** {}{}'.format(title,toPing,url))
+						await send_to_channel(channel, '**{}** {}{}'.format(title,toPing,url))
 
 async def redditSearch(client,message,text):
 	output=''
