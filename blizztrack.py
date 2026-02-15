@@ -118,7 +118,7 @@ class BlizztrackService:
                 payload = json.loads(text)
                 region_versions = self.parse_blizztrack_regions(payload)
                 if region_versions:
-                    LOGGER.info('Blizztrack API response found for %s via %s', track_key, url)
+                    LOGGER.debug('Blizztrack API response found for %s via %s', track_key, url)
                     return region_versions
             except Exception as exc:
                 api_failures.append(f'{url} -> {exc}')
