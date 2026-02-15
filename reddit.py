@@ -89,10 +89,10 @@ async def redditForwarding(client):#Called every 60 seconds
 				url='\n'+url
 				client.seenPosts.append([title,author,url])
 				if author in redditors or sum(1 for i in keywords if i.lower() in title.lower()) or 'Blizz_' in author:
-					client.forwardedPosts.append([title,author,url])␊
-					if author=='nexusschoolhouse':␊
+					client.forwardedPosts.append([title,author,url])
+					if author=='nexusschoolhouse':
 						await send_to_channel(222817241249480704, '**{}**: '.format(title)+url)
-					if author=='Spazzo965' and ('CCL' in title or 'Undocumented' in title):␊
+					if author=='Spazzo965' and ('CCL' in title or 'Undocumented' in title):
 						await send_to_channel(222817241249480704, '**{}**: '.format(title)+url)
 
 					toPing=[]
