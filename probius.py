@@ -655,11 +655,19 @@ class MyClient(discord.Client):
 		if await self.should_suppress_actions():
 			return
 		await super().on_raw_reaction_add(payload) if hasattr(super(), "on_raw_reaction_add") else None
-		member=client.get_user(payload.user_id)
-		if member.id==DiscordUserIDs['Probius']:#Probius did reaction
+		member = payload.member or self.get_user(payload.user_id)
+		if member is None:
+			try:
+				member = await self.fetch_user(payload.user_id)
+			except:
+				return
+		if self.user and member.id==self.user.id:#Probius did reaction
 			return
 		try:
-			message=await client.get_channel(payload.channel_id).fetch_message(payload.message_id)
+			channel = self.get_channel(payload.channel_id)
+			if channel is None:
+				channel = await self.fetch_channel(payload.channel_id)
+			message=await channel.fetch_message(payload.message_id)
 		except:
 			return
 		if message.author.id==670832046389854239:#Advisor wrote message
@@ -675,7 +683,7 @@ class MyClient(discord.Client):
 			if str(payload.emoji)=='🇱':
 				await giveLfgRoles(member,self)
 
-		elif message.author.id==DiscordUserIDs['Probius']:#Message is from Probius
+		elif self.user and message.author.id==self.user.id:#Message is from Probius
 			if str(payload.emoji)=='👎':#downvoted with thumbs down
 				if message.channel.id in [DiscordChannelIDs['RedditPosts'],DiscordChannelIDs['Pokedex']]:#Message is in reddit posts or pokedex
 					output=member.mention+'<:bonk:761981366744121354>'
