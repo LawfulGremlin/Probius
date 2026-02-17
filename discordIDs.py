@@ -43,4 +43,5 @@ DiscordChannelIDs={
     'SecretCabal':607922629902598154,
     'Pepega':576018992624435220,
     'Probius':571531013558239238,
+    'MemberLeaves':970629651942752277,
 }

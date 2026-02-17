@@ -792,16 +792,20 @@ class MyClient(discord.Client):
 		await super().on_member_remove(payload) if hasattr(super(), "on_member_remove") else None
 		guild=member.guild
 		if guild.name=='Wind Striders':
+			core_member_role = guild.get_role(DiscordRoleIDs['CoreMember'])
+			if core_member_role in member.roles:
+				secret_cabal = guild.get_channel(DiscordChannelIDs['SecretCabal'])
+				await secret_cabal.send(member.name+' left the server')
+				
 			unsorted=guild.get_role(DiscordRoleIDs['Unsorted'])
 			if unsorted in member.roles:	
 				print(member.name+' left (unsorted)')
-				#channel=guild.get_channel(DiscordChannelIDs['General'])#general
-				channel=guild.get_channel(970629651942752277)#new channel
+				channel=guild.get_channel(DiscordChannelIDs['MemberLeaves'])
 				await channel.send(member.name+' (unsorted) left <:samudab:578998204142452747>')
 				return
+				
 			print(member.name+' left')
-			#channel=guild.get_channel(616617012948631552)#super-secret-cabal
-			channel=guild.get_channel(970629651942752277)#new channel
+			channel=guild.get_channel(DiscordChannelIDs['MemberLeaves'])
 			await channel.send(member.name+' left the server <:samudab:578998204142452747>')
 			await removePokedex(self,member.id)
 			
