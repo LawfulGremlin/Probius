@@ -501,6 +501,31 @@ class MyClient(discord.Client):
 					return True
 		return False
 		
+	async def log_to_console(self, text: str) -> None:
+		log_id = DiscordChannelIDs.get('LoggingChannel')
+		if not log_id:
+			print(f"⚠️ LoggingChannel ID missing. message was: {text}")
+			return
+
+		ch = self.get_channel(log_id)
+		if ch is None:
+			# Not cached yet (or not in guild cache). Try API fetch.
+			try:
+				ch = await self.fetch_channel(log_id)
+			except discord.NotFound:
+				ch = None
+			except discord.Forbidden:
+				print(f"⚠️ No permission to access LoggingChannel ({log_id}). message was: {text}")
+				return
+			except discord.HTTPException as e:
+				print(f"⚠️ Failed to fetch LoggingChannel ({log_id}): {e}. message was: {text}")
+				return
+
+		if ch is None:
+			print(f"⚠️ LoggingChannel ({log_id}) not found, message was: {text}")
+			return
+
+		await ch.send(f"`{text}`")
 
 	def blizztrack_summary_lines(self,current_versions):
 		return blizztrack_service.summary_lines(current_versions)
