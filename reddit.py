@@ -8,17 +8,9 @@ from discordIDs import *
 
 LOGGER = logging.getLogger(__name__)
 
-redditors=['Asddsa76', 'Blackstar_9', 'Spazzo965', 'SomeoneNew666', 'joshguillen', 'SotheBee', 'AnemoneMeer', 'Pscythic', 'Elitesparkle', 'slapperoni', 
-'secret3332', 'Carrygan_', 'Archlichofthestorm', 'Gnueless', 'ThatDoomedStudent', 'InfiniteEarth', 'SamiSha_', 'twinklesunnysun', 'Pelaberus', 'KillMeWithMemes',
-'MarvellousBee','Naturage','Derenash','Riokaii','Demon_Ryu','hellobgs','Beg_For_Mercy','Russisch','Valamar1732','ArashiNoShad0w','lemindhawk','Goshin26',
-'TiredZealot','MasterAblar','SHreddedWInd','MrWilbus','NotBelial','Dark_Polaroid','HeroesProfile','nexusschoolhouse','Nightterror0','WorstMedivhKR','Babaguscooties',
-'JozefxDark']
+redditors=['Asddsa76', 'Blackstar_9', 'Spazzo965', 'SomeoneNew666', 'joshguillen', 'SotheBee', 'AnemoneMeer', 'Pscythic', 'Elitesparkle', 'slapperoni', 'secret3332', 'Carrygan_', 'Archlichofthestorm', 'Gnueless', 'ThatDoomedStudent', 'InfiniteEarth', 'SamiSha_', 'twinklesunnysun', 'Pelaberus', 'KillMeWithMemes', 'MarvellousBee','Naturage','Derenash','Riokaii','Demon_Ryu','hellobgs','Beg_For_Mercy', 'Russisch','Valamar1732', 'ArashiNoShad0w','lemindhawk', 'Goshin26', 'TiredZealot','MasterAblar','SHreddedWInd', 'MrWilbus','NotBelial','Dark_Polaroid','HeroesProfile','nexusschoolhouse','Nightterror0','WorstMedivhKR','Babaguscooties', 'JozefxDark']
 
-discordnames={'Pscythic':'Soren Lily', 'SotheBee':'Sothe', 'slapperoni':'slap','secret3332':'SecretChaos','Archlichofthestorm':'Trolldaeron','ThatDoomedStudent':'Carbon','InfiniteEarth':'Flash',
-'KillMeWithMemes':'Nick','Demon_Ryu':'Messa','Russisch':'Ekata','ArashiNoShad0w':'LeviathaN','lemindhawk':'MindHawk','Nightterror0':'Deafwing', 'Dark_Polaroid':'Medimold','Babaguscooties':'Labreris'}
-
-#General rules
-POST_TO_GENERAL = True
+discordnames={'Pscythic':'Soren Lily', 'SotheBee':'Sothe', 'slapperoni':'slap','secret3332':'SecretChaos','Archlichofthestorm':'Trolldaeron','ThatDoomedStudent':'Carbon','InfiniteEarth':'Flash','KillMeWithMemes':'Nick','Demon_Ryu':'Messa','Russisch':'Ekata','ArashiNoShad0w':'LeviathaN','lemindhawk':'MindHawk','Nightterror0':'Deafwing', 'Dark_Polaroid':'Medicake','Babaguscooties':'Labreris'}
 
 #Posts with these in title gets forwarded regardless of author
 keywords={
@@ -28,7 +20,10 @@ keywords={
 'Valeera':[684944498039455781, 738440231568801914],
 'Orphea':[410481791204327424, 738440231568801914],
 'Deathwing':[204893952908853248],
-'Time stop':[268871972778147870]
+'Time stop':[268871972778147870],
+'Li-Ming':[738440231568801914]
+}
+
 
 # --- Restart-only dedupe: scan last N messages in target channels once on startup ---
 REDDIT_ID_RE = re.compile(
@@ -178,11 +173,10 @@ async def redditForwarding(client):#Called every 60 seconds
 							author=discordnames[author]
 						await send_to_channel(DiscordChannelIDs['LoggingChannel'], '`{} by {}`'.format(title,author))#log
 						await send_to_channel(DiscordChannelIDs['RedditPosts'], '**{}** by {}: {}'.format(title,author,url))#reddit-posts
-						if POST_TO_GENERAL: #Toggle post to general for non-gnueless posts
-							if toPing:
-								await send_to_channel(DiscordChannelIDs['General'], '**{}** by {}: {}\n{}'.format(title,author,url,toPing))#general
-							else:
-								await send_to_channel(DiscordChannelIDs['General'], '**{}** by {}: {}'.format(title,author,url))#general
+						if toPing:
+							await send_to_channel(DiscordChannelIDs['General'], '**{}** by {}: {}\n{}'.format(title,author,url,toPing))#general
+						else:
+							await send_to_channel(DiscordChannelIDs['General'], '**{}** by {}: {}'.format(title,author,url))#general
 						if author=='Gnueless' and 'rotation' in title.lower():
 							general_channel = client.get_channel(DiscordChannelIDs['General'])
 							if general_channel is not None:
