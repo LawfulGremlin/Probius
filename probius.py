@@ -568,8 +568,7 @@ class MyClient(discord.Client):
 		self.ready=True
 		await self.check_blizztrack_versions(announce_if_first_run=True)
 		print('Ready!')
-#		self.rulesChannel=self.get_channel(DiscordChannelIDs['ServerRules'])#server-rules
-#		self.welcomeMessage='Please read '+self.rulesChannel.mention+' and type here your **`Region`, `Rank`, and `Preferred Colour`**, separated by commas, to get sorted and unlock the rest of the channels <:OrphAYAYA:657172520092565514>'
+		self.rulesChannel=self.get_channel(DiscordChannelIDs['ServerRules'])#server-rules
 		if self.rulesChannel is not None:
 			self.welcomeMessage = (
 				'Please read ' + self.rulesChannel.mention +
@@ -577,10 +576,9 @@ class MyClient(discord.Client):
 			)
 		else:
 			self.welcomeMessage = (
-				'Welcome! Please read the rules channel and type here your **`Region`, `Rank`, and `Preferred Colour`**, separated by commas, to get sorted and unlock the rest of the channels <:OrphAYAYA:657172520092565514>'
+				'Please read the rules channel and type here your **`Region`, `Rank`, and `Preferred Colour`**, separated by commas, to get sorted and unlock the rest of the channels <:OrphAYAYA:657172520092565514>'
 			)
 			print("WARNING: rulesChannel not found; welcomeMessage uses fallback text.")
-
 
 	async def on_message(self, message):
 		print(f"Received: {message.content} from {message.author} (channel: {message.channel})")
@@ -773,7 +771,6 @@ class MyClient(discord.Client):
 				print(member.created_at)
 				await member.ban()
 				return'''
-
 			await member.add_roles(guild.get_role(DiscordRoleIDs['Unsorted']))#UNSORTED role
 			print(member.name+' joined')
 			channel=guild.get_channel(DiscordChannelIDs['General'])#general
