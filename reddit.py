@@ -37,7 +37,6 @@ DISCORD_REDDIT_DEDUPE_CHANNEL_IDS = {
 	DiscordChannelIDs['General'],
 	DiscordChannelIDs['NormieHeroes'],
 	DiscordChannelIDs['Samuro'],
-	222817241249480704,  # special channel used for nexusschoolhouse/Spazzo965 cases
 }
 
 DISCORD_REDDIT_DEDUPE_LIMIT = 50
@@ -156,11 +155,6 @@ async def redditForwarding(client):#Called every 60 seconds
 				client.seenPosts.append([title,author,url])
 				if author in redditors or sum(1 for i in keywords if i.lower() in title.lower()) or 'Blizz_' in author:
 					client.forwardedPosts.append([title,author,url])
-					if author=='nexusschoolhouse':
-						await send_to_channel(222817241249480704, '**{}**: '.format(title)+url)
-					if author=='Spazzo965' and ('CCL' in title or 'Undocumented' in title):
-						await send_to_channel(222817241249480704, '**{}**: '.format(title)+url)
-
 					toPing=[]
 					for i in keywords:
 						if i.lower() in title.lower():

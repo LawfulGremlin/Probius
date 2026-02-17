@@ -617,7 +617,6 @@ class MyClient(discord.Client):
 				if e.name=='Full patch notes at':
 					output='Patch notes!\n'+e.value
 					await message.channel.send('@everyone '+output)
-					await self.get_channel(222817241249480704).send(output)
 			except:pass
 		if message.author.id==DiscordUserIDs['Gooey']:
 			if 'explod' in message.content.lower():
