@@ -82,6 +82,15 @@ SUPPRESS_USER_IDS = [
 ]
 
 blizztrack_service=BlizztrackService()
+def read_probius_version() -> str:
+	try:
+		with open('hversion.txt', 'r', encoding='utf-8') as f:
+			v = f.read().strip()
+			return v or "unknown (empty hversion.txt)"
+	except FileNotFoundError:
+		return "unknown (hversion.txt missing)"
+	except Exception as e:
+		return f"unknown (error reading hversion.txt: {e})"
 
 async def mainProbius(client,message,texts):
 	global exitBool
@@ -567,6 +576,7 @@ class MyClient(discord.Client):
 			print(f"{g.name} ({g.id})")
 		self.ready=True
 		await self.check_blizztrack_versions(announce_if_first_run=True)
+		logging.info("Probius running version: %s", read_probius_version())
 		print('Ready!')
 		self.rulesChannel=self.get_channel(DiscordChannelIDs['ServerRules'])#server-rules
 		if self.rulesChannel is not None:
