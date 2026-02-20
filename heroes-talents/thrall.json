@@ -107,7 +107,7 @@
         "tooltipId": "ThrallCrashLightning",
         "talentTreeId": "ThrallCrashLightning",
         "name": "Crash Lightning",
-        "description": "Quest: Hit at least 2 Heroes with a single use of Chain Lightning. Upon dying, lose 6 stacks. Gained rewards cannot be lost.  Reward: After hitting multiple Heroes 15 times, Chain Lightning deals 270 additional damage on its bounces after the initial strike.  Reward: After hitting multiple Heroes 30 times, Chain Lightning deals 325 additional damage on its bounces, and prioritizes bouncing to enemy Heroes.",
+        "description": "Quest: Hit at least 2 Heroes with a single use of Chain Lightning. Upon dying, lose 6 stacks. Gained rewards cannot be lost.  Reward: After hitting multiple Heroes 15 times, Chain Lightning deals 270 additional damage on its bounces after the initial strike.  Mythic Reward: After hitting multiple Heroes 30 times, Chain Lightning deals 325 additional damage on its bounces, and prioritizes bouncing to enemy Heroes.",
         "icon": "storm_ui_icon_thrall_chainlightning_var1.png",
         "type": "Q",
         "sort": 2,

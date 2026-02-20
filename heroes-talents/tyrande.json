@@ -48,7 +48,7 @@
       {
         "uid": "b4597d",
         "name": "Lunar Flare",
-        "description": "After 0.75 seconds, deal 150 (+4% per level) damage and Stun enemies in the target area for 0.75 seconds. Restores 25 mana per enemy hit.  Quest: Hitting a Hero with Lunar Flare increases its damage by 4%, up to 180%.  Reward: After hitting 10 Heroes, increase Lunar Flare's range by 30%.  Reward: After hitting 20 Heroes, Sentinel now pierces the first Hero hit.  Mythic Reward: After hitting 45 Heroes, Every 8th Basic Attacks fires a Lunar Flare, prioritizing Heroes affected by Hunter's Mark.",
+        "description": "After 0.75 seconds, deal 150 (+4% per level) damage and Stun enemies in the target area for 0.75 seconds. Restores 25 Mana per enemy hit.  Quest: Hitting a Hero with Lunar Flare increases its damage by 4%, up to 160%.  Reward: After hitting 10 Heroes, increase Lunar Flare's range by 30%.  Reward: After hitting 20 Heroes, Sentinel now pierces the first Hero hit.  Mythic Reward: After hitting 40 Heroes, Every 8th Basic Attacks fires a Lunar Flare, prioritizing Heroes.",
         "hotkey": "E",
         "abilityId": "Tyrande|E1",
         "cooldown": 13,
@@ -178,7 +178,7 @@
         "tooltipId": "ElunesFury",
         "talentTreeId": "ElunesGift",
         "name": "Elune's Gift",
-        "description": "Hitting an enemy hero with Lunar Flare grants 20% Spell Power for 10 seconds.",
+        "description": "Hitting an enemy Hero with Lunar Flare grants 20% Spell Power for 10 seconds.",
         "icon": "storm_ui_icon_tyrande_lunarflare.png",
         "type": "E",
         "sort": 1
