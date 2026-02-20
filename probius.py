@@ -875,7 +875,7 @@ class MyClient(discord.Client):
 				if prior_version and prior_version!=current_version:
 					logging.info('Blizztrack update detected: track=%s region=%s from=%s to=%s',track_key,region,prior_version,current_version)
 					await probius_channel.send(
-						f"update detected on {track_key} from {prior_version} to {current_version} in region {region}. <@&892852776877568010>"
+						f"update detected on {track_key} from {prior_version} to {current_version} in region {region}. {DiscordUserIDs['medimold']}"
 					)
 
 		self.blizztrackVersionState=current_versions
