@@ -32,7 +32,6 @@ REDDIT_ID_RE = re.compile(
 )
 
 DISCORD_REDDIT_DEDUPE_CHANNEL_IDS = {
-	DiscordChannelIDs['LoggingChannel'],
 	DiscordChannelIDs['RedditPosts'],
 	DiscordChannelIDs['General'],
 	DiscordChannelIDs['NormieHeroes'],
@@ -165,12 +164,10 @@ async def redditForwarding(client):#Called every 60 seconds
 					if author in redditors:
 						if author in discordnames:
 							author=discordnames[author]
-						await send_to_channel(DiscordChannelIDs['LoggingChannel'], '`{} by {}`'.format(title,author))#log
+						LOGGER.info('%s by %s', title, author)
 						await send_to_channel(DiscordChannelIDs['RedditPosts'], '**{}** by {}: {}'.format(title,author,url))#reddit-posts
 						if toPing:
 							await send_to_channel(DiscordChannelIDs['General'], '**{}** by {}: {}\n{}'.format(title,author,url,toPing))#general
-						else:
-							await send_to_channel(DiscordChannelIDs['General'], '**{}** by {}: {}'.format(title,author,url))#general
 						if author=='Gnueless' and 'rotation' in title.lower():
 							general_channel = client.get_channel(DiscordChannelIDs['General'])
 							if general_channel is not None:
@@ -178,7 +175,7 @@ async def redditForwarding(client):#Called every 60 seconds
 							else:
 								LOGGER.warning('redditForwarding skipped rotation post: General channel unavailable')
 					else:
-						await send_to_channel(DiscordChannelIDs['LoggingChannel'], '`{} by {}`'.format(title,author))#log
+						LOGGER.info('%s by %s', title, author)
 						channel=[DiscordChannelIDs['NormieHeroes'],DiscordChannelIDs['Samuro']]['samuro' in title.lower()]#Normie-heroes or Samuro
 						await send_to_channel(channel, '**{}** {}{}'.format(title,toPing,url))
 

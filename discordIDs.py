@@ -33,7 +33,6 @@ DiscordGuildIDs={
 }
 
 DiscordChannelIDs={
-    'LoggingChannel':1473368389886935070,
     'Pokedex':597140352411107328,
     'RedditPosts':665317972646166538,
     'General':557366982471581718,

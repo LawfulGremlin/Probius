@@ -106,17 +106,6 @@ async def mainProbius(client,message,texts):
 		channelName='hots' if channelName=='heroes-got-canceled' else channelName
 		loggingMessage=guildname+' '*(15-len(guildname))+channelName+' '+' '*(17-len(channelName))+str(message.author.name)+' '*(18-len(str(message.author.name)))+' '+message.content
 		print(loggingMessage)
-#		await client.get_channel(DiscordChannelIDs['LoggingChannel']).send('`{}`'.format(loggingMessage))
-		log_id = DiscordChannelIDs.get('LoggingChannel')
-		log_ch = client.get_channel(log_id) if log_id else None
-
-		if log_ch:
-			# send to Discord
-			await log_ch.send(f'`{loggingMessage}`')
-		else:
-			# fallback to console if channel not found
-			print(f"⚠️ LoggingChannel ({log_id}) not found, message was: {loggingMessage}")
-
 
 	for text in texts:
 		command=text[0].replace(' ','')
@@ -511,30 +500,7 @@ class MyClient(discord.Client):
 		return False
 		
 	async def log_to_console(self, text: str) -> None:
-		log_id = DiscordChannelIDs.get('LoggingChannel')
-		if not log_id:
-			print(f"⚠️ LoggingChannel ID missing. message was: {text}")
-			return
-
-		ch = self.get_channel(log_id)
-		if ch is None:
-			# Not cached yet (or not in guild cache). Try API fetch.
-			try:
-				ch = await self.fetch_channel(log_id)
-			except discord.NotFound:
-				ch = None
-			except discord.Forbidden:
-				print(f"⚠️ No permission to access LoggingChannel ({log_id}). message was: {text}")
-				return
-			except discord.HTTPException as e:
-				print(f"⚠️ Failed to fetch LoggingChannel ({log_id}): {e}. message was: {text}")
-				return
-
-		if ch is None:
-			print(f"⚠️ LoggingChannel ({log_id}) not found, message was: {text}")
-			return
-
-		await ch.send(f"`{text}`")
+		print(text)
 
 	def blizztrack_summary_lines(self,current_versions):
 		return blizztrack_service.summary_lines(current_versions)
@@ -726,24 +692,21 @@ class MyClient(discord.Client):
 				elif '<:bonk:761981366744121354>' in message.content or '@' in message.content:
 					return
 				output=member.name+' deleted a message from Probius'
-				print(output)
-				await client.get_channel(DiscordChannelIDs['LoggingChannel']).send('`'+output+'`')
+				await self.log_to_console(output)
 				await message.delete()
 				return
 
 			elif str(payload.emoji)=='👍' and message.reactions[[i.emoji for i in message.reactions].index(str(payload.emoji))].me:
 				if 'React to ping' in message.content:#Pokedex:
 					output=member.name+' started a balance discussion'
-					print(output)
-					await client.get_channel(DiscordChannelIDs['LoggingChannel']).send('`'+output+'`')
+					await self.log_to_console(output)
 					await pingPokedex(self,message,member)
 					return
 				elif 'Talent build' in message.content:
 					await message.remove_reaction(payload.emoji,message.author)
 					await printBuildFromReaction(client,message)
 					output=member.name+' viewed talents'
-					print(output)
-					await client.get_channel(DiscordChannelIDs['LoggingChannel']).send('`'+output+'`')
+					await self.log_to_console(output)
 					return
 		elif str(payload.emoji)=='⚽' and message.channel.id==DiscordChannelIDs['General']:
 			await sortFromReaction(message,member.id,self)
