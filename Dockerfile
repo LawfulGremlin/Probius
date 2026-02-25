@@ -1,32 +1,50 @@
-FROM python:3.12-slim
+FROM python:3.12-slim AS builder
 
-# Install system dependencies for scipy, pillow, etc.
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1
+
+# Build-time dependencies needed when wheels are unavailable.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+        build-essential \
         gcc \
         gfortran \
-        libopenblas-dev \
-        liblapack-dev \
-        python3-dev \
-        build-essential \
         libjpeg-dev \
-        zlib1g-dev \
+        liblapack-dev \
+        libopenblas-dev \
         libpng-dev \
-        && rm -rf /var/lib/apt/lists/*
+        zlib1g-dev && \
+    rm -rf /var/lib/apt/lists/*
 
-# Set working directory
 WORKDIR /app
 
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Copy Probius source code and token injector
+COPY requirements.txt .
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt
+
+
+FROM python:3.12-slim AS runtime
+
+ENV PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PATH="/opt/venv/bin:$PATH"
+
+# Runtime shared libraries for scipy/pillow.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        libjpeg62-turbo \
+        liblapack3 \
+        libopenblas0-pthread \
+        libpng16-16 \
+        zlib1g && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY --from=builder /opt/venv /opt/venv
 COPY . .
 
-# Suppress Python syntax warnings
-# ENV PYTHONWARNINGS="ignore::SyntaxWarning"
-ENV PYTHONUNBUFFERED=1
-
-# Set default command
 CMD ["python", "probius.py"]
