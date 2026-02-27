@@ -3,6 +3,7 @@ from urllib.request import urlopen
 from aliases import *
 from itertools import repeat
 from json import loads
+import html as htmlmod
 import asyncio
 import aiohttp
 import nest_asyncio
@@ -174,30 +175,78 @@ async def downloadAll(client,argv):
 	loop = asyncio.get_event_loop()#running instead of event when calling from a coroutine. But running is for python3.7+
 	loop.run_until_complete(loopFunction(client,heroes,patch))
 
-async def heroStats(hero,channel,allowRecursion=True):
-	async with channel.typing():
-		if hero=='The_Lost_Vikings':
-			for i in ['Olaf','Baleog','Erik']:
-				await heroStats(i,channel)
-		elif hero=='Rexxar' and allowRecursion:
-			for i in ['Rexxar','Misha']:
-				await heroStats(i,channel,False)# :spaghetti:
-		elif hero=='Gall':
-			await heroStats('Cho',channel)
-		else:
-			async with aiohttp.ClientSession() as session:
-				page = await fetch(session, 'https://heroesofthestorm.gamepedia.com/index.php?title=Data:'+hero)
-				page=''.join([i for i in page])
-				page=page.split('<td><code>skills</code>')[0]
-				output=[]
-				usefulStats=['date', 'health', 'resource', 'attack speed', 'attack range', 'attack damage', 'unit radius']
-				for i in usefulStats:
-					match=re.search(r'<td>\s*'+re.escape(i)+r'\s*</td>\s*<td>(.*?)</td>', page, flags=re.IGNORECASE|re.DOTALL)
-					if not match:
-						continue
-					value=re.sub(r'<.*?>','',match.group(1)).replace('\n','').strip()
-					output.append('**'+i.replace('attack','aa').replace('unit ','').replace('health','hp').capitalize()+'**: '+value)
-				if output:
-					await channel.send('``'+hero+':`` '+', '.join(output))
-				else:
-					await channel.send('``'+hero+':`` Could not find stat data.')
+def _strip_tags(s: str) -> str:
+    s = re.sub(r'<br\s*/?>', '\n', s, flags=re.IGNORECASE)
+    s = re.sub(r'<.*?>', '', s, flags=re.DOTALL)
+    return htmlmod.unescape(s).replace('\xa0', ' ').strip()
+
+def _parse_first_table_vars(html_text: str) -> dict:
+    """
+    Parses the first <table> in the rendered article body and returns:
+      { "<variable name>": "<value>", ... }
+    Where <variable name> is the *2nd column* in Data: pages.
+    """
+    m = re.search(r'<table[^>]*>.*?</table>', html_text, flags=re.IGNORECASE | re.DOTALL)
+    if not m:
+        return {}
+
+    table = m.group(0)
+    out = {}
+
+    # Each row: <tr> ... </tr>
+    for row in re.finditer(r'<tr[^>]*>(.*?)</tr>', table, flags=re.IGNORECASE | re.DOTALL):
+        cells = re.findall(r'<t[dh][^>]*>(.*?)</t[dh]>', row.group(1), flags=re.IGNORECASE | re.DOTALL)
+        if len(cells) < 3:
+            continue
+
+        var = _strip_tags(cells[1]).lower()
+        val = _strip_tags(cells[2])
+
+        if var:
+            out[var] = val
+
+    return out
+
+async def heroStats(hero, channel, allowRecursion=True):
+    async with channel.typing():
+        if hero == 'The_Lost_Vikings':
+            for i in ['Olaf', 'Baleog', 'Erik']:
+                await heroStats(i, channel)
+            return
+        if hero == 'Rexxar' and allowRecursion:
+            for i in ['Rexxar', 'Misha']:
+                await heroStats(i, channel, False)
+            return
+        if hero == 'Gall':
+            await heroStats('Cho', channel)
+            return
+        url = "https://heroesofthestorm.fandom.com/index.php"
+        params = {"title": f"Data:{hero}", "action": "render"}
+        usefulStats = ['date', 'health', 'resource', 'resource type',
+                       'attack speed', 'attack range', 'attack damage', 'unit radius']
+        headers = {
+            "User-Agent": "HotS-Stats-Script/1.0 (aiohttp)"
+        }
+        try:
+            async with aiohttp.ClientSession(headers=headers) as session:
+                async with session.get(url, params=params) as resp:
+                    resp.raise_for_status()
+                    page = await resp.text()
+            vars_map = _parse_first_table_vars(page)
+            if 'resource' in vars_map and 'resource type' in vars_map:
+                vars_map['resource'] = f"{vars_map['resource']} {vars_map['resource type']}".strip()
+            output = []
+            for key in usefulStats:
+                if key not in vars_map:
+                    continue
+                label = (key.replace('attack', 'aa')
+                           .replace('unit ', '')
+                           .replace('health', 'hp')
+                           .capitalize())
+                output.append(f"**{label}**: {vars_map[key]}")
+            if output:
+                await channel.send('``' + hero + ':`` ' + ', '.join(output))
+            else:
+                await channel.send('``' + hero + ':`` Could not find stat data.')
+        except Exception as e:
+            await channel.send(f'``{hero}:`` Stat fetch failed: {type(e).__name__}: {e}')
