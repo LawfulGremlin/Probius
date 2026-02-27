@@ -3,250 +3,309 @@ from urllib.request import urlopen
 from aliases import *
 from itertools import repeat
 from json import loads
-import html as htmlmod
 import asyncio
 import aiohttp
 import nest_asyncio
 import re
+import html as htmlmod
+from bs4 import BeautifulSoup
+
 nest_asyncio.apply()
 
+
 def trimForHeroesTalents(hero):
-	hero=hero.replace('The','').lower()
-	remove=".' -_"
+	hero = hero.replace('The', '').lower()
+	remove = ".' -_"
 	for i in remove:
-		hero=hero.replace(i,'')
-	hero=hero.replace('butcher','thebutcher').replace('ú','u').replace('cho','chogall')
+		hero = hero.replace(i, '')
+	hero = hero.replace('butcher', 'thebutcher').replace('ú', 'u').replace('cho', 'chogall')
 	return hero
 
-async def additionalInfo(hero,name,description):
-	addDict={#Adds text to the end of descriptions
-	'alexstrasza':{
-		'Cleansing Flame':'Dragonqueen: Cleansing Flame is cast instantly. The duration of Dragonqueen is paused, while basic abilities continue to cool down while in flight.',
-		'Dragon Scales':'Getting Stunned, Rooted, or Silenced while Dragon Scales is active refreshes its duration to 2 seconds.',
-		'Life-Binder':'Dragonqueen: The cast range of Life-Binder is increased from 6 to 9.'},
-	'anubarak':{'Cocoon':'Each instance of damage reduces the remaining duration by 0.5 seconds.'},
-	'chen':{'Storm, Earth, Fire':'Using Storm, Earth, Fire removes most negative effects from Chen.'},
-	'falstad':{'Epic Mount':'The arrival marker becomes invisible to enemies.'},
-	'garrosh':{'Armor Up':'Stacks with other sources of armour, up to 75.'},
-	'guldan':{
-		'Life Tap':'Costs 222 (+4% per level) Health.',
-		'Ruinous Affliction':'This third strike is also considered to be the first strike of the next three hits.'},
-	'imperius':{'Impaling Light':'The damage bonus is per brand and stacks to 225%'},
-	'johanna':{"Heaven's Fury":'Up to two healing and two damaging bolts per second.'},
-	'kelthuzad':{'The Damned Return':'Does not interact with Arcane Echoes, Phylactery, or Hungering Cold.'},
-	'lunara':{'Leaping Strike':'Lunara is unstoppable while leaping.'},
-	'maiev':{'Spirit of Vengeance':'Reactivate to teleport to the spirit.'},
-	'malfurion':{
-		'Moonfire':'The area itself stays revealed for 2 seconds.',
-		'Celestial Alignment':'Also extends the reveal of located area to 5 seconds.'},
-	'mei':{'Avalanche':'Damage is not affected by number of consumed heroes.'},
-	'mephisto':{'Spite':'Also extends mana regeneration from the healing globe.'},
-	'muradin':{'Grand Slam':'If an ally participates in the takedown, a second charge is gained'},
-	'orphea':{'Overflowing Chaos':'The damage bonus is multiplicative.'},
-	'rehgar':{"Farseer's Blessing":'Both casts heal around the target.'},
-	'sylvanas':{
-		'Haunting Wave':'Sylvanas is unstoppable while flying to the banshee. Reactivation becomes available 0.5 seconds after first E.',
-		'Mercenary Queen':'Mercenaries will not be stunned if the third application is through Remorseless.',
-		'Black Arrows':'Remorseless shots do not disable enemies.',
-		'Remorseless':"This shot originates from Sylvanas' target, and does not disable buildings while Black Arrows is active. If the third stack on the secondary target is reached through this shot, the target will not be affected by Mercenary Queen."},
-	'tassadar':{'Psychic Shock':'Psionic Storm deals 2 additional ticks of damage.',
-		'Shock Ray':'0.375 second wind up before beam starts, additional 0.75 second channel while beam is moving. If the channel is interrupted, beam instantly disappears.'},
-	'tracer':{'Ricochet':'Ricochet shots interact with Telefrag, but not Focus Fire.'},
-	'tychus':{'Focusing Diodes':'The damage bonus is multiplicative.'},
-	'tyrande':{"Huntress' Fury":"Splashes give cooldown reduction on Light of Elune, but do not trigger any of Tyrande's other Basic Attack related effects."},
-	'valla':{
-		'Strafe':'The duration of Hatred is paused when channeling, and reset to full when Strafe ends.',
-		'Vault':'The damage bonus is multiplicative.'},
-	'zarya':{'Energy':'The damage bonus is multiplicative.'}
+
+async def additionalInfo(hero, name, description):
+	addDict = {  # Adds text to the end of descriptions
+		'alexstrasza': {
+			'Cleansing Flame': 'Dragonqueen: Cleansing Flame is cast instantly. The duration of Dragonqueen is paused, while basic abilities continue to cool down while in flight.',
+			'Dragon Scales': 'Getting Stunned, Rooted, or Silenced while Dragon Scales is active refreshes its duration to 2 seconds.',
+			'Life-Binder': 'Dragonqueen: The cast range of Life-Binder is increased from 6 to 9.'
+		},
+		'anubarak': {'Cocoon': 'Each instance of damage reduces the remaining duration by 0.5 seconds.'},
+		'chen': {'Storm, Earth, Fire': 'Using Storm, Earth, Fire removes most negative effects from Chen.'},
+		'falstad': {'Epic Mount': 'The arrival marker becomes invisible to enemies.'},
+		'garrosh': {'Armor Up': 'Stacks with other sources of armour, up to 75.'},
+		'guldan': {
+			'Life Tap': 'Costs 222 (+4% per level) Health.',
+			'Ruinous Affliction': 'This third strike is also considered to be the first strike of the next three hits.'
+		},
+		'imperius': {'Impaling Light': 'The damage bonus is per brand and stacks to 225%'},
+		'johanna': {"Heaven's Fury": 'Up to two healing and two damaging bolts per second.'},
+		'kelthuzad': {'The Damned Return': 'Does not interact with Arcane Echoes, Phylactery, or Hungering Cold.'},
+		'lunara': {'Leaping Strike': 'Lunara is unstoppable while leaping.'},
+		'maiev': {'Spirit of Vengeance': 'Reactivate to teleport to the spirit.'},
+		'malfurion': {
+			'Moonfire': 'The area itself stays revealed for 2 seconds.',
+			'Celestial Alignment': 'Also extends the reveal of located area to 5 seconds.'
+		},
+		'mei': {'Avalanche': 'Damage is not affected by number of consumed heroes.'},
+		'mephisto': {'Spite': 'Also extends mana regeneration from the healing globe.'},
+		'muradin': {'Grand Slam': 'If an ally participates in the takedown, a second charge is gained'},
+		'orphea': {'Overflowing Chaos': 'The damage bonus is multiplicative.'},
+		'rehgar': {"Farseer's Blessing": 'Both casts heal around the target.'},
+		'sylvanas': {
+			'Haunting Wave': 'Sylvanas is unstoppable while flying to the banshee. Reactivation becomes available 0.5 seconds after first E.',
+			'Mercenary Queen': 'Mercenaries will not be stunned if the third application is through Remorseless.',
+			'Black Arrows': 'Remorseless shots do not disable enemies.',
+			'Remorseless': "This shot originates from Sylvanas' target, and does not disable buildings while Black Arrows is active. If the third stack on the secondary target is reached through this shot, the target will not be affected by Mercenary Queen."
+		},
+		'tassadar': {
+			'Psychic Shock': 'Psionic Storm deals 2 additional ticks of damage.',
+			'Shock Ray': '0.375 second wind up before beam starts, additional 0.75 second channel while beam is moving. If the channel is interrupted, beam instantly disappears.'
+		},
+		'tracer': {'Ricochet': 'Ricochet shots interact with Telefrag, but not Focus Fire.'},
+		'tychus': {'Focusing Diodes': 'The damage bonus is multiplicative.'},
+		'tyrande': {"Huntress' Fury": "Splashes give cooldown reduction on Light of Elune, but do not trigger any of Tyrande's other Basic Attack related effects."},
+		'valla': {
+			'Strafe': 'The duration of Hatred is paused when channeling, and reset to full when Strafe ends.',
+			'Vault': 'The damage bonus is multiplicative.'
+		},
+		'zarya': {'Energy': 'The damage bonus is multiplicative.'}
 	}
 	if hero in addDict:
 		if name in addDict[hero]:
-			description+=' ***'+addDict[hero][name]+'***'
+			description += ' ***' + addDict[hero][name] + '***'
 	return description
 
-async def fixTooltips(hero,name,description):
-	fixDict={#Replaces text using strikethrough
-	'anubarak':{'Nerubian Armor':['ed',' ']},
-	'auriel':{"Swift Sweep":['50%','100%']},
-	'blaze':{"Suppressive Fire":['Power','Damage']},
-	'cassia':{'War Traveler':['8%','4%','1 second','0.5 seconds']},
-	'guldan':{'Ruinous Affliction':['strike deals',"strike's damage is increased to"]},
-	'malfurion':{"Nature's Balance":['area','radius']},
-	'lili':{'Healing Brew':['ally (prioritizing Heroes)','allied Hero']},
-	'ragnaros':{'Blistering Attacks':['Basic Abilities','Living Meteor or Blast Wave, or enemy heroes with Empower Sulfuras,']},
-	'sylvanas':{'Haunting Wave':['teleport','fly']},
-	'tracer':{
-		'Sleight of Hand':['20%','24%'],
-		'Reload':['0.75','0.8125']},
-	'varian':{'Victory Rush':['or Monster dies','dies, or when you kill a Monster']},
-	'zuljin':{'Boneslicer':["is no longer removed by", 'lasts for 30']}
+
+async def fixTooltips(hero, name, description):
+	fixDict = {  # Replaces text using strikethrough
+		'anubarak': {'Nerubian Armor': ['ed', ' ']},
+		'auriel': {"Swift Sweep": ['50%', '100%']},
+		'blaze': {"Suppressive Fire": ['Power', 'Damage']},
+		'cassia': {'War Traveler': ['8%', '4%', '1 second', '0.5 seconds']},
+		'guldan': {'Ruinous Affliction': ['strike deals', "strike's damage is increased to"]},
+		'malfurion': {"Nature's Balance": ['area', 'radius']},
+		'lili': {'Healing Brew': ['ally (prioritizing Heroes)', 'allied Hero']},
+		'ragnaros': {'Blistering Attacks': ['Basic Abilities', 'Living Meteor or Blast Wave, or enemy heroes with Empower Sulfuras,']},
+		'sylvanas': {'Haunting Wave': ['teleport', 'fly']},
+		'tracer': {
+			'Sleight of Hand': ['20%', '24%'],
+			'Reload': ['0.75', '0.8125']
+		},
+		'varian': {'Victory Rush': ['or Monster dies', 'dies, or when you kill a Monster']},
+		'zuljin': {'Boneslicer': ["is no longer removed by", 'lasts for 30']}
 	}
 	if hero in fixDict:
 		if name in fixDict[hero]:
-			for i in range(len(fixDict[hero][name])//2):
-				description=description.replace(fixDict[hero][name][2*i],'~~'+fixDict[hero][name][2*i]+'~~ '+'***'+fixDict[hero][name][2*i+1]+'***')
-	return await additionalInfo(hero,name,description)
+			for i in range(len(fixDict[hero][name]) // 2):
+				description = description.replace(
+					fixDict[hero][name][2 * i],
+					'~~' + fixDict[hero][name][2 * i] + '~~ ' + '***' + fixDict[hero][name][2 * i + 1] + '***'
+				)
+	return await additionalInfo(hero, name, description)
+
 
 async def descriptionFortmatting(description):
 	if 'Repeatable Quest' in description:
-		description=description.replace('Repeatable Quest:','\n    **❢ Repeatable Quest:**')
+		description = description.replace('Repeatable Quest:', '\n    **❢ Repeatable Quest:**')
 	else:
-		description=description.replace('Quest:','\n    **❢ Quest:**')
-	description=description.replace('Reward:','\n    **? Reward:**').replace('Gambit:','\n   **♙Gambit:**').replace('Passive:','\n    **Passive:**')
+		description = description.replace('Quest:', '\n    **❢ Quest:**')
+	description = description.replace('Reward:', '\n    **? Reward:**').replace('Gambit:', '\n   **♙Gambit:**').replace('Passive:', '\n    **Passive:**')
 	return description
+
 
 async def fetch(session, url):
 	async with session.get(url) as response:
 		return await response.text()
 
-async def downloadHero(hero,client,patch):
-	#async with aiohttp.ClientSession() as session:
-	with open('heroes-talents/'+hero+'.json') as page:
-		'''if patch=='':
-			page = await fetch(session, 'https://raw.githubusercontent.com/heroespatchnotes/heroes-talents/master/hero/'+hero+'.json')
-			#page = await fetch(session, 'https://raw.githubusercontent.com/MGatner/heroes-talents/83004/hero/'+hero+'.json')
-		else:
-			page = await fetch(session, 'https://raw.githubusercontent.com/MGatner/heroes-talents/'+patch+'/hero/'+hero+'.json')'''
-		#client.heroPages={...'genji':[abilities,talents], ...}
-		page=loads(page.read())
-		abilities=[]
+
+async def downloadHero(hero, client, patch):
+	with open('heroes-talents/' + hero + '.json') as page:
+		page = loads(page.read())
+		abilities = []
 		if hero in ['ltmorales', 'valeera', 'deathwing', 'zarya']:
-			resource='energy'
-		elif hero=='chen':
-			resource='brew'
-		elif hero=='sonya':
-			resource='fury'
-		elif hero=='gazlowe':
-			resource='scrap'
+			resource = 'energy'
+		elif hero == 'chen':
+			resource = 'brew'
+		elif hero == 'sonya':
+			resource = 'fury'
+		elif hero == 'gazlowe':
+			resource = 'scrap'
 		else:
-			resource='mana'
+			resource = 'mana'
 
 		for i in page['abilities'].keys():
 			for ability in page['abilities'][i]:
 				if 'hotkey' in ability:
-					output='**['+ability['hotkey']+'] '
+					output = '**[' + ability['hotkey'] + '] '
 				else:
-					output='**[D] '
-				output+=ability['name']+':** '
+					output = '**[D] '
+				output += ability['name'] + ':** '
 				if 'cooldown' in ability or 'manaCost' in ability:
-					output+='*'
+					output += '*'
 					if 'cooldown' in ability:
-						output+=str(ability['cooldown'])+' seconds'
+						output += str(ability['cooldown']) + ' seconds'
 						if 'manaCost' in ability:
-							output+=', '
+							output += ', '
 					if 'manaCost' in ability:
-						output+=str(ability['manaCost'])+' '+resource
-					output+=';* '
-				output+=await descriptionFortmatting(ability['description'])
-				output=await fixTooltips(hero,ability['name'],output)
+						output += str(ability['manaCost']) + ' ' + resource
+					output += ';* '
+				output += await descriptionFortmatting(ability['description'])
+				output = await fixTooltips(hero, ability['name'], output)
 				abilities.append(output)
-		if hero=='samuro':
+		if hero == 'samuro':
 			abilities.append("**[D] Image Transmission:** *14 seconds;* Activate to switch places with a target Mirror Image, removing most negative effects from Samuro and the Mirror Image.\n**Advancing Strikes:** Basic Attacks against enemy Heroes increase Samuro's Movement Speed by 25% for 2 seconds.")
-		elif hero=='hogger':
+		elif hero == 'hogger':
 			abilities.append("**[D] Rage:** Rage is gained by taking damage or dealing Basic Attack damage. Hogger’s Basic Ability cooldowns refresh 1% faster for every 2 points of Rage. After 3 seconds of not gaining Rage, it begins to quickly decay. ***Hogger gains 5 Rage when landing a Basic Attack and 1 Rage each time he takes damage.***")
 
-		talents=[]
-		keys=sorted(list(page['talents'].keys()),key=lambda x:int(x))
+		talents = []
+		keys = sorted(list(page['talents'].keys()), key=lambda x: int(x))
 		for key in keys:
-			tier=page['talents'][key]
-			talentTier=[]
+			tier = page['talents'][key]
+			talentTier = []
 			for talent in tier:
-				output='**['+str(int(key)-2*int(hero=='chromie' and key!='1'))+'] '
-				output+=talent['name']+':** '
+				output = '**[' + str(int(key) - 2 * int(hero == 'chromie' and key != '1')) + '] '
+				output += talent['name'] + ':** '
 				if 'cooldown' in talent:
-					output+='*'+str(talent['cooldown'])+' seconds;* '
-				output+=await descriptionFortmatting(talent['description'])
-				output=await fixTooltips(hero,talent['name'],output)
+					output += '*' + str(talent['cooldown']) + ' seconds;* '
+				output += await descriptionFortmatting(talent['description'])
+				output = await fixTooltips(hero, talent['name'], output)
 				talentTier.append(output)
 			talents.append(talentTier)
-		client.heroPages[aliases(hero)]=(abilities,talents)
+		client.heroPages[aliases(hero)] = (abilities, talents)
 
-async def loopFunction(client,heroes,patch):
-	for future in asyncio.as_completed(map(downloadHero, heroes,repeat(client),repeat(patch))):
+
+async def loopFunction(client, heroes, patch):
+	for future in asyncio.as_completed(map(downloadHero, heroes, repeat(client), repeat(patch))):
 		await future
 
-async def downloadAll(client,argv):
-	if len(argv)==2:
-		patch=argv[1]
+
+async def downloadAll(client, argv):
+	if len(argv) == 2:
+		patch = argv[1]
 	else:
-		patch=''
-	heroes=getHeroes()
-	heroes=list(map(trimForHeroesTalents,heroes))
-	loop = asyncio.get_event_loop()#running instead of event when calling from a coroutine. But running is for python3.7+
-	loop.run_until_complete(loopFunction(client,heroes,patch))
+		patch = ''
+	heroes = getHeroes()
+	heroes = list(map(trimForHeroesTalents, heroes))
+	loop = asyncio.get_event_loop()  # running instead of event when calling from a coroutine.
+	loop.run_until_complete(loopFunction(client, heroes, patch))
 
-def _strip_tags(s: str) -> str:
-    s = re.sub(r'<br\s*/?>', '\n', s, flags=re.IGNORECASE)
-    s = re.sub(r'<.*?>', '', s, flags=re.DOTALL)
-    return htmlmod.unescape(s).replace('\xa0', ' ').strip()
 
-def _parse_first_table_vars(html_text: str) -> dict:
-    """
-    Parses the first <table> in the rendered article body and returns:
-      { "<variable name>": "<value>", ... }
-    Where <variable name> is the *2nd column* in Data: pages.
-    """
-    m = re.search(r'<table[^>]*>.*?</table>', html_text, flags=re.IGNORECASE | re.DOTALL)
-    if not m:
-        return {}
+# -------------------------
+# Fandom stats (updated)
+# -------------------------
 
-    table = m.group(0)
-    out = {}
+def _norm_key(s: str) -> str:
+	return " ".join(s.replace("\xa0", " ").strip().lower().split())
 
-    # Each row: <tr> ... </tr>
-    for row in re.finditer(r'<tr[^>]*>(.*?)</tr>', table, flags=re.IGNORECASE | re.DOTALL):
-        cells = re.findall(r'<t[dh][^>]*>(.*?)</t[dh]>', row.group(1), flags=re.IGNORECASE | re.DOTALL)
-        if len(cells) < 3:
-            continue
 
-        var = _strip_tags(cells[1]).lower()
-        val = _strip_tags(cells[2])
+async def _fetch_fandom_data_vars(session: aiohttp.ClientSession, hero: str) -> dict:
+	"""
+	Returns dict like {"health": "2450", "attack speed": "1.25", ...}
+	by calling the MediaWiki API parse endpoint for Data:<hero>.
+	This avoids Fandom UI endpoints that commonly return 403.
+	"""
+	api_url = "https://heroesofthestorm.fandom.com/api.php"
+	params = {
+		"action": "parse",
+		"page": f"Data:{hero}",
+		"prop": "text",
+		"format": "json",
+		"formatversion": "2",
+		"redirects": "1",
+	}
 
-        if var:
-            out[var] = val
+	async with session.get(api_url, params=params) as resp:
+		resp.raise_for_status()
+		data = await resp.json(content_type=None)
 
-    return out
+	html_text = data.get("parse", {}).get("text", "")
+	if not html_text:
+		return {}
+
+	soup = BeautifulSoup(html_text, "html.parser")
+
+	# Data pages usually have a wikitable with 3 columns: Parameter | Variable | Value
+	table = soup.select_one("table.wikitable") or soup.find("table")
+	if not table:
+		return {}
+
+	out = {}
+	for tr in table.find_all("tr"):
+		cells = tr.find_all(["td", "th"])
+		if len(cells) < 3:
+			continue
+
+		var = _norm_key(cells[1].get_text(" ", strip=True))
+		val = cells[2].get_text(" ", strip=True)
+		val = htmlmod.unescape(val).replace("\xa0", " ").strip()
+
+		# Skip header row if present
+		if var and var != "variable":
+			out[var] = val
+
+	return out
+
 
 async def heroStats(hero, channel, allowRecursion=True):
-    async with channel.typing():
-        if hero == 'The_Lost_Vikings':
-            for i in ['Olaf', 'Baleog', 'Erik']:
-                await heroStats(i, channel)
-            return
-        if hero == 'Rexxar' and allowRecursion:
-            for i in ['Rexxar', 'Misha']:
-                await heroStats(i, channel, False)
-            return
-        if hero == 'Gall':
-            await heroStats('Cho', channel)
-            return
-        url = "https://heroesofthestorm.fandom.com/index.php"
-        params = {"title": f"Data:{hero}", "action": "render"}
-        usefulStats = ['date', 'health', 'resource', 'resource type',
-                       'attack speed', 'attack range', 'attack damage', 'unit radius']
-        headers = {
-            "User-Agent": "HotS-Stats-Script/1.0 (aiohttp)"
-        }
-        try:
-            async with aiohttp.ClientSession(headers=headers) as session:
-                async with session.get(url, params=params) as resp:
-                    resp.raise_for_status()
-                    page = await resp.text()
-            vars_map = _parse_first_table_vars(page)
-            if 'resource' in vars_map and 'resource type' in vars_map:
-                vars_map['resource'] = f"{vars_map['resource']} {vars_map['resource type']}".strip()
-            output = []
-            for key in usefulStats:
-                if key not in vars_map:
-                    continue
-                label = (key.replace('attack', 'aa')
-                           .replace('unit ', '')
-                           .replace('health', 'hp')
-                           .capitalize())
-                output.append(f"**{label}**: {vars_map[key]}")
-            if output:
-                await channel.send('``' + hero + ':`` ' + ', '.join(output))
-            else:
-                await channel.send('``' + hero + ':`` Could not find stat data.')
-        except Exception as e:
-            await channel.send(f'``{hero}:`` Stat fetch failed: {type(e).__name__}: {e}')
+	async with channel.typing():
+		if hero == 'The_Lost_Vikings':
+			for i in ['Olaf', 'Baleog', 'Erik']:
+				await heroStats(i, channel)
+			return
+		elif hero == 'Rexxar' and allowRecursion:
+			for i in ['Rexxar', 'Misha']:
+				await heroStats(i, channel, False)  # :spaghetti:
+			return
+		elif hero == 'Gall':
+			await heroStats('Cho', channel)
+			return
+
+		usefulStats = [
+			'date',
+			'health',
+			'resource',
+			'resource type',
+			'attack speed',
+			'attack range',
+			'attack damage',
+			'unit radius'
+		]
+
+		headers = {
+			# Fandom tends to prefer "real" UA strings.
+			"User-Agent": "HotS-Stats-Bot/1.0 (+discord; aiohttp)",
+			"Accept": "application/json,text/html;q=0.9,*/*;q=0.8",
+			"Accept-Language": "en-US,en;q=0.9",
+		}
+
+		timeout = aiohttp.ClientTimeout(total=20)
+
+		try:
+			async with aiohttp.ClientSession(headers=headers, timeout=timeout) as session:
+				vars_map = await _fetch_fandom_data_vars(session, hero)
+
+			if not vars_map:
+				await channel.send(f'``{hero}:`` Could not find stat data.')
+				return
+
+			# Make resource nicer if type is present
+			if 'resource' in vars_map and 'resource type' in vars_map:
+				vars_map['resource'] = f"{vars_map['resource']} {vars_map['resource type']}".strip()
+
+			output = []
+			for k in usefulStats:
+				if k not in vars_map:
+					continue
+				label = (k.replace('attack', 'aa')
+						   .replace('unit ', '')
+						   .replace('health', 'hp')
+						   .capitalize())
+				output.append('**' + label + '**: ' + vars_map[k])
+
+			if output:
+				await channel.send('``' + hero + ':`` ' + ', '.join(output))
+			else:
+				await channel.send(f'``{hero}:`` Could not find stat data.')
+
+		except Exception as e:
+			await channel.send(f'``{hero}:`` Stat fetch failed: {type(e).__name__}: {e}')
