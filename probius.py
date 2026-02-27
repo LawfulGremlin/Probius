@@ -455,7 +455,7 @@ class MyClient(discord.Client):
 		self.seenTitles=[]
 		self.seenPosts=[]
 		self.forwardedPosts=[]
-#		self.proxyEmojis={}
+		self.proxyEmojis={}
 		# create the background task and run it in the background
 		self.bgTask0 = self.loop.create_task(self.bgTaskSubredditForwarding())
 		self.bgTask1 = self.loop.create_task(self.bgTaskBlizztrackVersionCheck())
