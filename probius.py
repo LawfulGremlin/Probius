@@ -73,7 +73,7 @@ coachingAliases=['coach', 'coaching', 'coachingsession']
 randomBuildAliases=['randombuild','rb','randb','randbuild','randomb']
 versionAliases=['version']
 
-SUPPRESS_USER_IDS = [
+SUPPRESS_USER_IDS = [#It can generally be assumed that suppression is not active.
 	DiscordUserIDs['Probius'],  # Probius
 #	786255199069143101,  # GuineaPig
 ]
