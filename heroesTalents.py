@@ -6,6 +6,7 @@ from json import loads
 import asyncio
 import aiohttp
 import nest_asyncio
+import re
 nest_asyncio.apply()
 
 def trimForHeroesTalents(hero):
@@ -188,11 +189,15 @@ async def heroStats(hero,channel,allowRecursion=True):
 				page = await fetch(session, 'https://heroesofthestorm.gamepedia.com/index.php?title=Data:'+hero)
 				page=''.join([i for i in page])
 				page=page.split('<td><code>skills</code>')[0]
-
 				output=[]
 				usefulStats=['date', 'health', 'resource', 'attack speed', 'attack range', 'attack damage', 'unit radius']
 				for i in usefulStats:
-					page=page.split('<td>'+i+'\n')[1]
-					page=page[page.index('<td>')+4:]
-					output.append('**'+i.replace('attack','aa').replace('unit ','').replace('health','hp').capitalize()+'**: '+str(page[:page.index('</td>')]).replace('\n',''))
-				await channel.send('``'+hero+':`` '+', '.join(output))
+					match=re.search(r'<td>\s*'+re.escape(i)+r'\s*</td>\s*<td>(.*?)</td>', page, flags=re.IGNORECASE|re.DOTALL)
+					if not match:
+						continue
+					value=re.sub(r'<.*?>','',match.group(1)).replace('\n','').strip()
+					output.append('**'+i.replace('attack','aa').replace('unit ','').replace('health','hp').capitalize()+'**: '+value)
+				if output:
+					await channel.send('``'+hero+':`` '+', '.join(output))
+				else:
+					await channel.send('``'+hero+':`` Could not find stat data.')
