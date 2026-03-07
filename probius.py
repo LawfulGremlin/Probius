@@ -529,7 +529,7 @@ def findTexts(message):
 	allTexts=[]
 	wholeText=message.content.lower()
 	for text in wholeText.split('\n'):
-		if '>' == text[0]:#This line is a quote
+		if not text or '>' == text[0]:#This line is a quote
 			continue
 		leftBrackets=[1+m.start() for m in re.finditer(r'\[',text)]#Must escape brackets when using regex
 		rightBrackets=[m.start() for m in re.finditer(r'\]',text)]
