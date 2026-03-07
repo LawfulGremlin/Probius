@@ -91,25 +91,43 @@ def read_probius_version() -> str:
 		return f"unknown (error reading hversion.txt: {e})"
 
 def diffUnderline(live_str, ptr_str):
-	"""Compare two strings word by word and wrap changed segments in __underline__."""
+	"""Compare two strings word by word and wrap changed segments in __underline__.
+	Both live and ptr are underlined: live shows removed/changed words, ptr shows added/changed words.
+	For deletions, the next equal word on the ptr side is also underlined to mark the position."""
 	live_words = live_str.split(' ')
 	ptr_words = ptr_str.split(' ')
 	matcher = difflib.SequenceMatcher(None, live_words, ptr_words)
+	opcodes = matcher.get_opcodes()
 	live_out = []
 	ptr_out = []
-	for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+	# Track which ptr indices need underlining due to adjacent deletions
+	ptr_mark_next = False
+	for idx, (tag, i1, i2, j1, j2) in enumerate(opcodes):
 		live_chunk = live_words[i1:i2]
 		ptr_chunk = ptr_words[j1:j2]
 		if tag == 'equal':
+			if ptr_mark_next and ptr_chunk:
+				# Underline the first word on ptr side to mark where deletion occurred
+				ptr_out.append('__' + ptr_chunk[0] + '__')
+				ptr_out.extend(ptr_chunk[1:])
+				ptr_mark_next = False
+			else:
+				ptr_out.extend(ptr_chunk)
 			live_out.extend(live_chunk)
-			ptr_out.extend(ptr_chunk)
 		elif tag == 'replace':
-			live_out.append('__' + ' '.join(live_chunk) + '__')
-			ptr_out.append('__' + ' '.join(ptr_chunk) + '__')
+			if live_chunk:
+				live_out.append('__' + ' '.join(live_chunk) + '__')
+			if ptr_chunk:
+				ptr_out.append('__' + ' '.join(ptr_chunk) + '__')
+			ptr_mark_next = False
 		elif tag == 'delete':
-			live_out.append('__' + ' '.join(live_chunk) + '__')
+			if live_chunk:
+				live_out.append('__' + ' '.join(live_chunk) + '__')
+			ptr_mark_next = True  # Mark next equal word on ptr to show where deletion was
 		elif tag == 'insert':
-			ptr_out.append('__' + ' '.join(ptr_chunk) + '__')
+			if ptr_chunk:
+				ptr_out.append('__' + ' '.join(ptr_chunk) + '__')
+			ptr_mark_next = False
 	return ' '.join(live_out), ' '.join(ptr_out)
 
 
