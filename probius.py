@@ -385,10 +385,7 @@ async def mainProbius(client,message,texts):
 						(_,test_talents)=client.heroPages_test[hero]
 						test_output=printTier(test_talents,tier_index)
 						if test_output != output:
-							output='**Live ['+live_v+']**
-'+output+'
-**PTR ['+test_v+']**
-'+test_output
+							output='**Live ['+live_v+']**\n'+output+'\n**PTR ['+test_v+']**\n'+test_output
 					except:
 						pass
 				tier=tier_index#Keep tier as index for rest of flow
