@@ -309,3 +309,88 @@ async def heroStats(hero, channel, allowRecursion=True):
 
 		except Exception as e:
 			await channel.send(f'``{hero}:`` Stat fetch failed: {type(e).__name__}: {e}')
+
+def readVersion(filename):
+	try:
+		with open(filename, 'r', encoding='utf-8') as f:
+			return f.read().strip()
+	except FileNotFoundError:
+		return ''
+
+
+def parseVersion(v):
+	try:
+		return tuple(int(x) for x in v.split('.'))
+	except:
+		return (0,)
+
+
+async def downloadHeroTest(hero, client, patch):
+	try:
+		with open('heroes-talents-test/' + hero + '.json') as page:
+			page = loads(page.read())
+			abilities = []
+			if hero in ['ltmorales', 'valeera', 'deathwing', 'zarya']:
+				resource = 'energy'
+			elif hero == 'chen':
+				resource = 'brew'
+			elif hero == 'sonya':
+				resource = 'fury'
+			elif hero == 'gazlowe':
+				resource = 'scrap'
+			else:
+				resource = 'mana'
+
+			for i in page['abilities'].keys():
+				for ability in page['abilities'][i]:
+					if 'hotkey' in ability:
+						output = '**[' + ability['hotkey'] + '] '
+					else:
+						output = '**[D] '
+					output += ability['name'] + ':** '
+					if 'cooldown' in ability or 'manaCost' in ability:
+						output += '*'
+						if 'cooldown' in ability:
+							output += str(ability['cooldown']) + ' seconds'
+							if 'manaCost' in ability:
+								output += ', '
+						if 'manaCost' in ability:
+							output += str(ability['manaCost']) + ' ' + resource
+						output += ';* '
+					output += await descriptionFortmatting(ability['description'])
+					output = await fixTooltips(hero, ability['name'], output)
+					abilities.append(output)
+			if hero == 'samuro':
+				abilities.append("**[D] Image Transmission:** *14 seconds;* Activate to switch places with a target Mirror Image, removing most negative effects from Samuro and the Mirror Image.\n**Advancing Strikes:** Basic Attacks against enemy Heroes increase Samuro's Movement Speed by 25% for 2 seconds.")
+			elif hero == 'hogger':
+				abilities.append("**[D] Rage:** Rage is gained by taking damage or dealing Basic Attack damage. Hogger's Basic Ability cooldowns refresh 1% faster for every 2 points of Rage. After 3 seconds of not gaining Rage, it begins to quickly decay. ***Hogger gains 5 Rage when landing a Basic Attack and 1 Rage each time he takes damage.***")
+
+			talents = []
+			keys = sorted(list(page['talents'].keys()), key=lambda x: int(x))
+			for key in keys:
+				tier = page['talents'][key]
+				talentTier = []
+				for talent in tier:
+					output = '**[' + str(int(key) - 2 * int(hero == 'chromie' and key != '1')) + '] '
+					output += talent['name'] + ':** '
+					if 'cooldown' in talent:
+						output += '*' + str(talent['cooldown']) + ' seconds;* '
+					output += await descriptionFortmatting(talent['description'])
+					output = await fixTooltips(hero, talent['name'], output)
+					talentTier.append(output)
+				talents.append(talentTier)
+			client.heroPages_test[aliases(hero)] = (abilities, talents)
+	except FileNotFoundError:
+		pass
+
+
+async def loopFunctionTest(client, heroes, patch):
+	for future in asyncio.as_completed(map(downloadHeroTest, heroes, repeat(client), repeat(patch))):
+		await future
+
+
+async def downloadAllTest(client, argv):
+	patch = argv[1] if len(argv) == 2 else ''
+	heroes = list(map(trimForHeroesTalents, getHeroes()))
+	loop = asyncio.get_event_loop()
+	loop.run_until_complete(loopFunctionTest(client, heroes, patch))

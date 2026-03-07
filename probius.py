@@ -376,7 +376,22 @@ async def mainProbius(client,message,texts):
 				continue
 			if tier.isdigit():#Talent tier
 				tier=int(tier)
-				output=printTier(talents,int(tier/3)+int(hero=='Chromie' and tier not in [1,18]))#Talents for Chromie come 2 lvls sooner, except lvl 1
+				tier_index=int(tier/3)+int(hero=='Chromie' and tier not in [1,18])#Talents for Chromie come 2 lvls sooner, except lvl 1
+				output=printTier(talents,tier_index)
+				live_v=readVersion('hversion.txt')
+				test_v=readVersion('hversion-test.txt')
+				if test_v and live_v and parseVersion(test_v) > parseVersion(live_v) and hero in client.heroPages_test:
+					try:
+						(_,test_talents)=client.heroPages_test[hero]
+						test_output=printTier(test_talents,tier_index)
+						if test_output != output:
+							output='**Live ['+live_v+']**
+'+output+'
+**PTR ['+test_v+']**
+'+test_output
+					except:
+						pass
+				tier=tier_index#Keep tier as index for rest of flow
 			elif tier in ['mount','z']:
 				await message.channel.send(printAbility(abilities,'z'))
 				continue
@@ -460,6 +475,7 @@ class MyClient(discord.Client):
 		self.bgTask0 = self.loop.create_task(self.bgTaskSubredditForwarding())
 		self.bgTask1 = self.loop.create_task(self.bgTaskBlizztrackVersionCheck())
 		self.heroPages={}
+		self.heroPages_test={}
 		self.lastWelcomeImage=[]
 		self.waitList=[]
 		self.ready=False#Wait until ready before taking commands
@@ -511,6 +527,7 @@ class MyClient(discord.Client):
 		self.loop.create_task(self.suppression_status_loop())
 		print('Downloading heroes...')
 		await downloadAll(self,argv)
+		await downloadAllTest(self,argv)
 #		print('Fetching proxy emojis...')
 #		guild = client.get_guild(603924426769170433)
 #		if guild is None:
