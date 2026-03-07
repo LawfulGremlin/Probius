@@ -91,60 +91,62 @@ def read_probius_version() -> str:
 		return f"unknown (error reading hversion.txt: {e})"
 
 def diffUnderline(live_str, ptr_str):
-	"""Compare two strings word by word and wrap changed segments in __underline__.
-	Both live and ptr are underlined: live shows removed/changed words, ptr shows added/changed words.
-	For deletions, the next equal word on the ptr side is also underlined to mark the position."""
+	"""Word-level diff. Underline changed words on each side. Deletions only marked on live, insertions only on ptr."""
 	live_words = live_str.split(' ')
 	ptr_words = ptr_str.split(' ')
 	matcher = difflib.SequenceMatcher(None, live_words, ptr_words)
-	opcodes = matcher.get_opcodes()
 	live_out = []
 	ptr_out = []
-	# Track which ptr indices need underlining due to adjacent deletions
-	ptr_mark_next = False
-	for idx, (tag, i1, i2, j1, j2) in enumerate(opcodes):
+	for tag, i1, i2, j1, j2 in matcher.get_opcodes():
 		live_chunk = live_words[i1:i2]
 		ptr_chunk = ptr_words[j1:j2]
 		if tag == 'equal':
-			if ptr_mark_next and ptr_chunk:
-				# Underline the first word on ptr side to mark where deletion occurred
-				ptr_out.append('__' + ptr_chunk[0] + '__')
-				ptr_out.extend(ptr_chunk[1:])
-				ptr_mark_next = False
-			else:
-				ptr_out.extend(ptr_chunk)
 			live_out.extend(live_chunk)
+			ptr_out.extend(ptr_chunk)
 		elif tag == 'replace':
 			if live_chunk:
 				live_out.append('__' + ' '.join(live_chunk) + '__')
 			if ptr_chunk:
 				ptr_out.append('__' + ' '.join(ptr_chunk) + '__')
-			ptr_mark_next = False
 		elif tag == 'delete':
 			if live_chunk:
 				live_out.append('__' + ' '.join(live_chunk) + '__')
-			ptr_mark_next = True  # Mark next equal word on ptr to show where deletion was
 		elif tag == 'insert':
 			if ptr_chunk:
 				ptr_out.append('__' + ' '.join(ptr_chunk) + '__')
-			ptr_mark_next = False
 	return ' '.join(live_out), ' '.join(ptr_out)
 
 
+def splitTalents(tier_output):
+	"""Split a printTier output into individual talent strings.
+	Talents start with **[ so we split on that boundary."""
+	parts = re.split(r'(?=\*\*\[)', tier_output)
+	return [p for p in parts if p.strip()]
+
+
 def diffTierOutput(live_output, test_output):
-	"""Apply word-level diff underlining to each talent line."""
-	live_lines = live_output.splitlines()
-	ptr_lines = test_output.splitlines()
+	"""Diff talent by talent (not line by line) to avoid misalignment from Quest/Reward newlines."""
+	live_talents = splitTalents(live_output)
+	ptr_talents = splitTalents(test_output)
+	# Match talents by header (the **[N] Name:** part)
+	def get_header(t):
+		return t.split(':**')[0] if ':**' in t else t[:20]
+	live_map = {get_header(t): t for t in live_talents}
+	ptr_map = {get_header(t): t for t in ptr_talents}
+	all_headers = list(live_map.keys())
+	for h in ptr_map:
+		if h not in all_headers:
+			all_headers.append(h)
 	live_result = []
 	ptr_result = []
-	for i in range(max(len(live_lines), len(ptr_lines))):
-		l = live_lines[i] if i < len(live_lines) else ''
-		p = ptr_lines[i] if i < len(ptr_lines) else ''
+	for h in all_headers:
+		l = live_map.get(h, '')
+		p = ptr_map.get(h, '')
 		if l == p:
-			live_result.append(l)
-			ptr_result.append(p)
+			live_result.append(l.rstrip('\n'))
+			ptr_result.append(p.rstrip('\n'))
 		else:
-			ld, pd = diffUnderline(l, p)
+			ld, pd = diffUnderline(l.rstrip('\n'), p.rstrip('\n'))
 			live_result.append(ld)
 			ptr_result.append(pd)
 	return '\n'.join(live_result), '\n'.join(ptr_result)
@@ -447,7 +449,7 @@ async def mainProbius(client,message,texts):
 						test_output=printTier(test_talents,tier_index)
 						if test_output != output:
 							live_diff, ptr_diff = diffTierOutput(output, test_output)
-							output='**Live ['+live_v+']**\n'+live_diff+'\n**PTR ['+test_v+']**\n'+ptr_diff
+							output='**Live ['+live_v+']**\n'+live_diff+'\n\n**PTR ['+test_v+']**\n'+ptr_diff
 					except:
 						pass
 				tier=tier_index#Keep tier as index for rest of flow
