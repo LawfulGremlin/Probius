@@ -91,7 +91,10 @@ def read_probius_version() -> str:
 		return f"unknown (error reading hversion.txt: {e})"
 
 def diffUnderline(live_str, ptr_str):
-	"""Word-level diff. Underline changed words on each side. Deletions only marked on live, insertions only on ptr."""
+	"""Word-level diff. Underline changed words on each side.
+	Deletions marked on live side only; insertions on ptr side only.
+	Empty tokens from formatting whitespace are preserved but never wrapped."""
+	# Split on spaces but keep empty tokens for spacing fidelity
 	live_words = live_str.split(' ')
 	ptr_words = ptr_str.split(' ')
 	matcher = difflib.SequenceMatcher(None, live_words, ptr_words)
@@ -100,20 +103,33 @@ def diffUnderline(live_str, ptr_str):
 	for tag, i1, i2, j1, j2 in matcher.get_opcodes():
 		live_chunk = live_words[i1:i2]
 		ptr_chunk = ptr_words[j1:j2]
+		# Filter empty strings before deciding whether to underline
+		live_nonempty = [w for w in live_chunk if w.strip()]
+		ptr_nonempty = [w for w in ptr_chunk if w.strip()]
 		if tag == 'equal':
 			live_out.extend(live_chunk)
 			ptr_out.extend(ptr_chunk)
 		elif tag == 'replace':
-			if live_chunk:
-				live_out.append('__' + ' '.join(live_chunk) + '__')
-			if ptr_chunk:
-				ptr_out.append('__' + ' '.join(ptr_chunk) + '__')
+			if live_nonempty:
+				live_out.append('__' + ' '.join(live_nonempty) + '__')
+			else:
+				live_out.extend(live_chunk)
+			if ptr_nonempty:
+				ptr_out.append('__' + ' '.join(ptr_nonempty) + '__')
+			else:
+				ptr_out.extend(ptr_chunk)
 		elif tag == 'delete':
-			if live_chunk:
-				live_out.append('__' + ' '.join(live_chunk) + '__')
+			if live_nonempty:
+				live_out.append('__' + ' '.join(live_nonempty) + '__')
+				# Mark deletion position on ptr with a visible marker
+				ptr_out.append('__(deleted)__')
+			else:
+				live_out.extend(live_chunk)
 		elif tag == 'insert':
-			if ptr_chunk:
-				ptr_out.append('__' + ' '.join(ptr_chunk) + '__')
+			if ptr_nonempty:
+				ptr_out.append('__' + ' '.join(ptr_nonempty) + '__')
+			else:
+				ptr_out.extend(ptr_chunk)
 	return ' '.join(live_out), ' '.join(ptr_out)
 
 
