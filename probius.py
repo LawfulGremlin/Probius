@@ -8,6 +8,7 @@ import asyncio
 import io
 import re
 import random
+import difflib
 import discord
 import time
 from sys import argv#Where to get the JSONs
@@ -88,6 +89,48 @@ def read_probius_version() -> str:
 		return "unknown (hversion.txt missing)"
 	except Exception as e:
 		return f"unknown (error reading hversion.txt: {e})"
+
+def diffUnderline(live_str, ptr_str):
+	"""Compare two strings word by word and wrap changed segments in __underline__."""
+	live_words = live_str.split(' ')
+	ptr_words = ptr_str.split(' ')
+	matcher = difflib.SequenceMatcher(None, live_words, ptr_words)
+	live_out = []
+	ptr_out = []
+	for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+		live_chunk = live_words[i1:i2]
+		ptr_chunk = ptr_words[j1:j2]
+		if tag == 'equal':
+			live_out.extend(live_chunk)
+			ptr_out.extend(ptr_chunk)
+		elif tag == 'replace':
+			live_out.append('__' + ' '.join(live_chunk) + '__')
+			ptr_out.append('__' + ' '.join(ptr_chunk) + '__')
+		elif tag == 'delete':
+			live_out.append('__' + ' '.join(live_chunk) + '__')
+		elif tag == 'insert':
+			ptr_out.append('__' + ' '.join(ptr_chunk) + '__')
+	return ' '.join(live_out), ' '.join(ptr_out)
+
+
+def diffTierOutput(live_output, test_output):
+	"""Apply word-level diff underlining to each talent line."""
+	live_lines = live_output.splitlines()
+	ptr_lines = test_output.splitlines()
+	live_result = []
+	ptr_result = []
+	for i in range(max(len(live_lines), len(ptr_lines))):
+		l = live_lines[i] if i < len(live_lines) else ''
+		p = ptr_lines[i] if i < len(ptr_lines) else ''
+		if l == p:
+			live_result.append(l)
+			ptr_result.append(p)
+		else:
+			ld, pd = diffUnderline(l, p)
+			live_result.append(ld)
+			ptr_result.append(pd)
+	return '\n'.join(live_result), '\n'.join(ptr_result)
+
 
 async def mainProbius(client,message,texts):
 	global exitBool
@@ -385,7 +428,8 @@ async def mainProbius(client,message,texts):
 						(_,test_talents)=client.heroPages_test[hero]
 						test_output=printTier(test_talents,tier_index)
 						if test_output != output:
-							output='**Live ['+live_v+']**\n'+output+'\n**PTR ['+test_v+']**\n'+test_output
+							live_diff, ptr_diff = diffTierOutput(output, test_output)
+							output='**Live ['+live_v+']**\n'+live_diff+'\n**PTR ['+test_v+']**\n'+ptr_diff
 					except:
 						pass
 				tier=tier_index#Keep tier as index for rest of flow
