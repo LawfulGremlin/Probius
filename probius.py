@@ -21,6 +21,26 @@ from heroesTalents import *		#The function that imports the hero pages
 from emojis import *			#Emojis
 from miscFunctions import*		#Edge cases and help message
 from getProbiusToken import *	#The token is in an untracked file because this is a public Github repo
+
+import os
+def getProbiusToken():
+	"""Return the Discord bot token.
+	Supports two sources, in priority order:
+	  1. DISCORD_TOKEN env var pointing to a Docker secrets file path
+	     (e.g. /run/secrets/probius_token) — file contents are read and returned.
+	  2. DISCORD_TOKEN env var containing the token value directly.
+	Falls back to the original getProbiusToken() from the imported module if
+	DISCORD_TOKEN is not set at all.
+	"""
+	token = os.environ.get("DISCORD_TOKEN", "")
+	if not token:
+		# Fall back to the original implementation from getProbiusToken.py
+		import getProbiusToken as _gpt
+		return _gpt.getProbiusToken()
+	if os.path.isfile(token):
+		with open(token) as f:
+			return f.read().strip()
+	return token
 from builds import *			#Hero builds
 from rotation import *			#Weekly rotation
 from quotes import *			#Lock-in quotes
