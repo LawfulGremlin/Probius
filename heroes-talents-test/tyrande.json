@@ -48,7 +48,7 @@
       {
         "uid": "b4597d",
         "name": "Lunar Flare",
-        "description": "After 0.75 seconds, deal 150 (+4% per level) damage and Stun enemies in the target area for 0.75 seconds. Restores 25 mana per enemy hit.  Quest: Hitting a Hero with Lunar Flare increases its damage by 5%, up to 250%.  Reward: After hitting 10 Heroes, increase Lunar Flare's range by 30%.  Reward: After hitting 20 Heroes, Sentinel now pierces the first Hero hit.  Mythic Reward: After hitting 50 Heroes, Tyrande's Basic Attacks occasionally trigger a Lunar Flare.",
+        "description": "After 0.75 seconds, deal 150 (+4% per level) damage and Stun enemies in the target area for 0.75 seconds. Restores 25 Mana per enemy hit.  Quest: Hitting a Hero with Lunar Flare increases its damage by 4%, up to 140%.  Double this bonus if the Hero dies within 3 Seconds.  Reward: After hitting 10 Heroes, increase Lunar Flare's range by 30%.  Reward: After hitting 20 Heroes, Sentinel now pierces the first Hero hit.  Mythic Reward: After hitting 40 Heroes, Every 8th Basic Attacks fires a Lunar Flare, prioritizing Heroes.  Attack Range increased by 1.",
         "hotkey": "E",
         "abilityId": "Tyrande|E1",
         "cooldown": 13,
@@ -178,7 +178,7 @@
         "tooltipId": "ElunesFury",
         "talentTreeId": "ElunesGift",
         "name": "Elune's Gift",
-        "description": "Hitting an enemy hero with Lunar Flare grants 20% Spell Power for 10 seconds.",
+        "description": "Hitting an enemy Hero with Lunar Flare grants 20% Spell Power for 10 seconds.",
         "icon": "storm_ui_icon_tyrande_lunarflare.png",
         "type": "E",
         "sort": 1
@@ -327,7 +327,7 @@
         "tooltipId": "TyrandeEyesOfTheHuntress",
         "talentTreeId": "TyrandeEyesOfTheHuntress",
         "name": "Eyes of the Huntress",
-        "description": "Shadowstalk reveals all enemy Heroes for 10 seconds and heals for 75% more.",
+        "description": "Shadowstalk reveals all enemy Heroes for 10 seconds and heals for 100% more.",
         "icon": "storm_ui_icon_tyrande_shadowstalk.png",
         "type": "Heroic",
         "sort": 1,
@@ -350,16 +350,16 @@
         ]
       },
       {
-        "tooltipId": "TyrandeLunarFlareShootingStarTalent",
-        "talentTreeId": "TyrandeSentinelMastery",
+        "tooltipId": "TyrandeCommanderofSentinels",
+        "talentTreeId": "TyrandeCommanderofSentinels",
         "name": "Commander of Sentinels",
-        "description": "Sentinel has an extra charge.",
+        "description": "Sentinel gains a 2nd charge, but ability cooldown increased by 3 Seconds.",
         "icon": "storm_ui_icon_tyrande_sentinel.png",
-        "type": "E",
+        "type": "W",
         "sort": 3,
-        "abilityId": "Tyrande|E1",
+        "abilityId": "Tyrande|W1",
         "abilityLinks": [
-          "Tyrande|E1"
+          "Tyrande|W1"
         ]
       },
       {

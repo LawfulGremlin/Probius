@@ -55,7 +55,7 @@
       {
         "uid": "5a140f",
         "name": "Robo-Goblin",
-        "description": "Activate to become Unstoppable for 1.5 seconds.  Passive: Basic Attacks deal 90 (+4% per level) bonus damage over 5 seconds, stacking up to 3 times.",
+        "description": "Activate to become Unstoppable for 1.5 seconds.  Passive: Basic Attacks deal 100 (+4% per level) bonus damage over 5 seconds, stacking up to 3 times.",
         "hotkey": "R",
         "abilityId": "Gazlowe|R1",
         "cooldown": 40,
@@ -222,7 +222,7 @@
         "tooltipId": "TinkerRoboGoblinPassive",
         "talentTreeId": "TinkerHeroicAbilityRoboGoblin",
         "name": "Robo-Goblin",
-        "description": "Activate to become Unstoppable for 1.5 seconds.  Passive: Basic Attacks deal 90 (+4% per level) bonus damage over 5 seconds, stacking up to 3 times.",
+        "description": "Activate to become Unstoppable for 1.5 seconds.  Passive: Basic Attacks deal 100 (+4% per level) bonus damage over 5 seconds, stacking up to 3 times.",
         "icon": "storm_ui_icon_gazlowe_robogoblin.png",
         "type": "Heroic",
         "sort": 1,

@@ -79,7 +79,7 @@
       {
         "uid": "d4b96a",
         "name": "Creep Tumor",
-        "description": "Lay a Creep Tumor that generates Creep. While on Creep, Zagara moves 20% faster and her summons move 30% faster. Tumors lose Health over 250 (+4% per level) seconds and reveal the surrounding area while active.  Stores up to 3 charges.",
+        "description": "Lay a Creep Tumor that generates Creep. While on Creep, Zagara moves 20% faster and her summons move 30% faster. Tumors lose Health over 250 seconds and reveal the surrounding area while active.  Stores up to 3 charges.",
         "hotkey": "D",
         "trait": true,
         "abilityId": "Zagara|D1",
@@ -290,7 +290,7 @@
         "tooltipId": "ZagaraHunterKillerMutaliskTalent",
         "talentTreeId": "ZagaraMasteryMutalisk",
         "name": "Mutalisk",
-        "description": "Reduce the cooldown of Hunter Killer by -0 seconds. Hunter Killer now spawns a Mutalisk. Mutalisks have a bounce attack, lose health over 42 seconds, and have 420 (+4.5% per level) Health.",
+        "description": "Reduce the cooldown of Hunter Killer by -0 seconds. Hunter Killer now spawns a Mutalisk. Mutalisks have a bounce attack, lose Health over 42 seconds, and have 420 (+4.5% per level) Health.",
         "icon": "storm_ui_icon_zagara_hunterkillermuta.png",
         "type": "W",
         "sort": 2,

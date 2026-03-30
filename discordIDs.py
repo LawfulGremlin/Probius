@@ -18,6 +18,7 @@ DiscordUserIDs={
 ProbiusPrivilegesIDs=[DiscordUserIDs['Asddsa']]
 
 DiscordRoleIDs={
+    'Moldy':892852776877568010,
     'IllusionMaster':557550150109888513,
     'Olympian':557521663894224912,
     'LFG':693038480783048774,

@@ -28,7 +28,7 @@
       {
         "uid": "e3adb7",
         "name": "Slime",
-        "description": "Deal 86 (+4% per level) damage and apply Slime on nearby enemies for 6 seconds, slowing them by 20%.  Deal 210 (+4% per level) damage to enemies who are already Slimed. Structures take 50% damage.",
+        "description": "Deal 86 (+4% per level) damage and apply Slime on nearby enemies for 6 seconds, Slowing them by 20%.  Deal 210 (+4% per level) damage to enemies who are already Slimed. Structures take 50% damage.",
         "hotkey": "Q",
         "abilityId": "Murky|Q1",
         "cooldown": 4,
@@ -61,7 +61,7 @@
         "description": "After 0.75 seconds, Murky commands a legion of Murlocs to march in a target direction, each one leaping onto the first enemy Hero or Structure they find. Each Murloc deals 130 (+4% per level) damage and slows its target by 15% for 5 seconds. Murlocs deal 50% damage to Structures.",
         "hotkey": "R",
         "abilityId": "Murky|R1",
-        "cooldown": 110,
+        "cooldown": 100,
         "icon": "storm_ui_icon_murky_marchofthemurlocs.png",
         "type": "heroic"
       },
@@ -94,7 +94,7 @@
         "tooltipId": "MurkyFishEye",
         "talentTreeId": "MurkyFishEye",
         "name": "Fish Eye",
-        "description": "Spawning from his Egg increases Murky's mount speed to 45% for 5 seconds.  Passive: Increase the Egg's Health and Shields by 100%, its sight radius by 300%, and it reveals all enemies in its sight radius.",
+        "description": "Spawning from his Egg increases Murky's mount speed to 45% for 5 seconds.  Passive: Increase the Egg's Health by 100%, its sight radius by 300%, and it reveals all enemies in its sight radius.",
         "icon": "storm_ui_icon_murky_trait_spawnegg.png",
         "type": "Trait",
         "sort": 1,
@@ -107,11 +107,14 @@
         "tooltipId": "MurkyEggHuntTalent",
         "talentTreeId": "MurkyShellGame",
         "name": "Shell Game",
-        "description": "Murky can now place 2 eggs and will randomly revive from them, however, the cooldown of placing an egg is increased by 15 seconds.",
+        "description": "Murky can now place 2 Eggs and will randomly revive from them, however, the cooldown of placing an Egg is increased by 15 seconds.",
         "icon": "storm_ui_icon_murky_egghunt.png",
-        "type": "Active",
+        "type": "Trait",
         "sort": 2,
-        "abilityId": "Murky|Active"
+        "abilityId": "Murky|D1",
+        "abilityLinks": [
+          "Murky|D1"
+        ]
       },
       {
         "tooltipId": "MurkyAFishyDeal",
@@ -214,7 +217,7 @@
         "icon": "storm_ui_icon_murky_marchofthemurlocs.png",
         "type": "Heroic",
         "sort": 1,
-        "cooldown": 110,
+        "cooldown": 100,
         "abilityId": "Murky|R1",
         "abilityLinks": [
           "Murky|R1"
@@ -253,7 +256,7 @@
         "tooltipId": "MurkyEggShell",
         "talentTreeId": "MurkyEggShell",
         "name": "Egg Shell",
-        "description": "Upon casting Spawn Egg, or when one of his eggs is killed, Murky gains a Shield for an amount equal to 35% of Murky's current Health.",
+        "description": "Upon casting Spawn Egg, or when one of his eggs is killed, Murky gains a Shield for an amount equal to 50% of Murky's current Health.",
         "icon": "storm_ui_icon_murky_trait_spawnegg.png",
         "type": "Trait",
         "sort": 2,
@@ -322,7 +325,7 @@
         "tooltipId": "MurkyMarchOfTheMurlocsNeverEndingMurlocsTalent",
         "talentTreeId": "MurkyMasteryNeverEndingMurlocs",
         "name": "Never-Ending Murlocs",
-        "description": "March of the Murlocs can be channeled, sending little Murlocs indefinitely. In addition, March of the Murlocs no longer deals reduced damage to structures.",
+        "description": "March of the Murlocs can be channeled indefinitely, and will always last its base duration when canceled early.  In addition, it no longer deals reduced damage to Structures.",
         "icon": "storm_ui_icon_murky_marchofthemurlocs.png",
         "type": "Heroic",
         "sort": 1,
@@ -345,29 +348,29 @@
         ]
       },
       {
-        "tooltipId": "MurkyBigTunaKahuna",
-        "talentTreeId": "MurkyFasterFish",
-        "name": "Faster Fish",
-        "description": "Pufferfish explodes 1.5 seconds faster.",
-        "icon": "storm_ui_icon_murky_pufferfish.png",
-        "type": "Trait",
-        "sort": 3,
-        "abilityId": "Murky|D1",
-        "abilityLinks": [
-          "Murky|D1"
-        ]
-      },
-      {
         "tooltipId": "MurkyMakingInky",
         "talentTreeId": "MurkyMakingInky",
         "name": "Making Inky",
         "description": "Reduces the cooldown of Slime by 1.5 seconds.",
         "icon": "storm_ui_icon_murky_slime.png",
         "type": "Q",
-        "sort": 4,
+        "sort": 3,
         "abilityId": "Murky|Q1",
         "abilityLinks": [
           "Murky|Q1"
+        ]
+      },
+      {
+        "tooltipId": "MurkyBigTunaKahuna",
+        "talentTreeId": "MurkyFasterFish",
+        "name": "Faster Fish",
+        "description": "Pufferfish explodes 1.5 seconds faster.",
+        "icon": "storm_ui_icon_murky_pufferfish.png",
+        "type": "W",
+        "sort": 4,
+        "abilityId": "Murky|D1",
+        "abilityLinks": [
+          "Murky|D1"
         ]
       }
     ]

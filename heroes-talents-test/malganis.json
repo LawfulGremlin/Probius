@@ -35,7 +35,7 @@
       {
         "uid": "ed88e2",
         "name": "Necrotic Embrace",
-        "description": "Desecrate the air, dealing 110 (+4% per level) damage to nearby enemies and gaining 25 Armor for 3 seconds.",
+        "description": "Desecrate the air, dealing 110 (+4% per level) damage to nearby enemies.  This ability provides twice as much healing from Vampiric Touch.",
         "hotkey": "W",
         "abilityId": "MalGanis|W1",
         "cooldown": 8,
@@ -90,29 +90,30 @@
   "talents": {
     "1": [
       {
+        "tooltipId": "MalGanisFelClawsWillOfTichondrius",
+        "talentTreeId": "MalGanisFelClawsWillOfTichondrius",
+        "name": "Will of Tichondrius",
+        "description": "Quest: Hit Heroes with Fel Claws to permanently increase Fel Claw's damage by 0.5. Quest: Hit 4 Heroes in the first two strikes to cause the final strike to increase damage by 2.  Reward: Upon gaining 40 bonus Damage, the final Stun is increased by 0.5 Seconds and the final strike steals 4% of enemy Hero Health.",
+        "icon": "storm_ui_icon_malganis_fel_1_b.png",
+        "type": "Q",
+        "sort": 1,
+        "isQuest": true,
+        "abilityId": "MalGanis|Q1",
+        "abilityLinks": [
+          "MalGanis|Q1"
+        ]
+      },
+      {
         "tooltipId": "MalGanisNecroticEmbraceWingedGuard",
         "talentTreeId": "MalGanisNecroticEmbraceWingedGuard",
         "name": "Winged Guard",
         "description": "Each time Necrotic Embrace hits an enemy Hero, gain 75 Physical Armor against the next enemy Hero Basic Attack.  If Winged Guard has no charges, Mal'Ganis will gain 1 charge after 6 seconds.",
         "icon": "storm_ui_icon_malganis_necrotic.png",
         "type": "W",
-        "sort": 1,
+        "sort": 2,
         "abilityId": "MalGanis|W1",
         "abilityLinks": [
           "MalGanis|W1"
-        ]
-      },
-      {
-        "tooltipId": "MalGanisVampiricTouchVampiricAura",
-        "talentTreeId": "MalGanisVampiricTouchVampiricAura",
-        "name": "Vampiric Aura",
-        "description": "Mal'Ganis heals for 30% of Physical Damage dealt, and nearby allied Heroes heal for 15% of Physical Damage dealt.",
-        "icon": "storm_ui_icon_malganis_trait.png",
-        "type": "Trait",
-        "sort": 2,
-        "abilityId": "MalGanis|D1",
-        "abilityLinks": [
-          "MalGanis|D1"
         ]
       },
       {
@@ -131,23 +132,23 @@
     ],
     "4": [
       {
-        "tooltipId": "MalGanisNecroticEmbraceFueledByTorment",
-        "talentTreeId": "MalGanisNecroticEmbraceFueledByTorment",
-        "name": "Fueled by Torment",
-        "description": "While Necrotic Embrace is active, Mal'Ganis heals for 12 (+4% per level) when damage is taken and Vampiric Touch converts 20% more Hero damage into healing.",
-        "icon": "storm_ui_icon_malganis_necrotic.png",
-        "type": "W",
+        "tooltipId": "MalGanisVampiricTouchVampiricAura",
+        "talentTreeId": "MalGanisVampiricTouchVampiricAura",
+        "name": "Vampiric Aura",
+        "description": "Mal'Ganis heals for 40% of Physical Damage dealt, and nearby allied Heroes heal for 20% of Physical Damage dealt.",
+        "icon": "storm_ui_icon_malganis_trait.png",
+        "type": "Trait",
         "sort": 1,
-        "abilityId": "MalGanis|W1",
+        "abilityId": "MalGanis|D1",
         "abilityLinks": [
-          "MalGanis|W1"
+          "MalGanis|D1"
         ]
       },
       {
         "tooltipId": "MalGanisNecroticEmbraceMightOfSargeras",
         "talentTreeId": "MalGanisNecroticEmbraceMightOfSargeras",
         "name": "Might of Sargeras",
-        "description": "Necrotic Embrace's Armor is increased to 50.",
+        "description": "Necrotic Embrace now provides 35 Armor for 3 Seconds..",
         "icon": "storm_ui_icon_malganis_necrotic_b.png",
         "type": "W",
         "sort": 2,
@@ -185,16 +186,16 @@
         ]
       },
       {
-        "tooltipId": "MalGanisFelClawsWillOfTichondrius",
-        "talentTreeId": "MalGanisFelClawsWillOfTichondrius",
-        "name": "Will of Tichondrius",
-        "description": "Each enemy Hero hit by the first 2 slashes of Fel Claws causes the final slash to steal 1% of maximum Health from enemy Heroes, up to 4%.  If at least 4 enemy Heroes are hit with the first 2 slashes of Fel Claws, then the final slash Stuns enemies for an additional 0.5 seconds.",
-        "icon": "storm_ui_icon_malganis_fel_1_b.png",
-        "type": "Q",
+        "tooltipId": "MalGanisNecroticEmbraceFueledByTorment",
+        "talentTreeId": "MalGanisNecroticEmbraceFueledByTorment",
+        "name": "Fueled by Torment",
+        "description": "Necrotic Embrace now Slows nearby enemies by 25% for 3 Seconds.",
+        "icon": "storm_ui_icon_malganis_necrotic.png",
+        "type": "W",
         "sort": 2,
-        "abilityId": "MalGanis|Q1",
+        "abilityId": "MalGanis|W1",
         "abilityLinks": [
-          "MalGanis|Q1"
+          "MalGanis|W1"
         ]
       },
       {

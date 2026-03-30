@@ -425,7 +425,7 @@
         "tooltipId": "AbathurSymbioteHivemindTalent",
         "talentTreeId": "AbathurSymbioteHivemind",
         "name": "Hivemind",
-        "description": "Symbiote creates an additional Symbiote on a nearby allied Hero. This Symbiote mimics the commands of the first, but does half damage and Shielding.",
+        "description": "Symbiote creates an additional Symbiote on a nearby allied Hero.  This Symbiote mimics the commands of the first, but does half damage and Shielding.",
         "icon": "storm_ui_icon_abathur_symbiote.png",
         "type": "Q",
         "sort": 3,

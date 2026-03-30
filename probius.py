@@ -588,6 +588,7 @@ class MyClient(discord.Client):
 		self.welcomeMessage=''
 		self.botChannels=botChannels
 		self.blizztrackVersionState=blizztrack_service.read_version_state()
+		self.blizztrackAnnouncedVersions={}  # {track_key: set of version strings already role-pinged}
 
 	async def should_suppress_actions(self):
 		for guild in self.guilds:
@@ -940,8 +941,14 @@ class MyClient(discord.Client):
 				prior_version=previous_regions.get(region)
 				if prior_version and prior_version!=current_version:
 					logging.info('Blizztrack update detected: track=%s region=%s from=%s to=%s',track_key,region,prior_version,current_version)
+					announced=self.blizztrackAnnouncedVersions.setdefault(track_key,set())
+					if current_version not in announced:
+						announced.add(current_version)
+						ping=f'<@&{DiscordRoleIDs["Moldy"]}>'
+					else:
+						ping=''
 					await probius_channel.send(
-						f"Update detected! Game version: {track_key} updated from {prior_version} to {current_version} in region {region}. {DiscordUserIDs['medimold']}"
+						f"Update detected! Game version: {track_key} updated from {prior_version} to {current_version} in region {region}.{' '+ping if ping else ''}"
 					)
 
 		self.blizztrackVersionState=current_versions
