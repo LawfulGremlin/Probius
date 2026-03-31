@@ -502,10 +502,48 @@ async def mainProbius(client,message,texts):
 					output=printTier(talents,3-2*int(hero=='Varian'))#Varian's heroics are at lvl 4
 					if hero=='Deathwing':
 						output=abilities[3]+'\n'+output#Deathwing has Cataclysm baseline
+				live_v=readVersion('hversion.txt')
+				test_v=readVersion('hversion-test.txt')
+				if test_v and live_v and parseVersion(test_v) > parseVersion(live_v) and hero in client.heroPages_test:
+					try:
+						(test_abilities,test_talents)=client.heroPages_test[hero]
+						if hero=='Tracer':
+							test_output=test_abilities[3]
+						else:
+							test_output=printTier(test_talents,3-2*int(hero=='Varian'))
+							if hero=='Deathwing':
+								test_output=test_abilities[3]+'\n'+test_output
+						if test_output != output:
+							live_diff, ptr_diff = diffTierOutput(output, test_output)
+							output='**Live ['+live_v+']**\n'+live_diff+'\n\n**PTR ['+test_v+']**\n'+ptr_diff
+					except:
+						pass
 			elif len(tier)==1 and tier in 'dqwe':#Ability (dqwe)
 				output=printAbility(abilities,tier)
+				live_v=readVersion('hversion.txt')
+				test_v=readVersion('hversion-test.txt')
+				if test_v and live_v and parseVersion(test_v) > parseVersion(live_v) and hero in client.heroPages_test:
+					try:
+						(test_abilities,_)=client.heroPages_test[hero]
+						test_output=printAbility(test_abilities,tier)
+						if test_output != output:
+							live_diff, ptr_diff = diffTierOutput(output, test_output)
+							output='**Live ['+live_v+']**\n'+live_diff+'\n\n**PTR ['+test_v+']**\n'+ptr_diff
+					except:
+						pass
 			elif tier=='trait':
 				output=printAbility(abilities,'d')
+				live_v=readVersion('hversion.txt')
+				test_v=readVersion('hversion-test.txt')
+				if test_v and live_v and parseVersion(test_v) > parseVersion(live_v) and hero in client.heroPages_test:
+					try:
+						(test_abilities,_)=client.heroPages_test[hero]
+						test_output=printAbility(test_abilities,'d')
+						if test_output != output:
+							live_diff, ptr_diff = diffTierOutput(output, test_output)
+							output='**Live ['+live_v+']**\n'+live_diff+'\n\n**PTR ['+test_v+']**\n'+ptr_diff
+					except:
+						pass
 			elif tier =='all':
 				await printEverything(client,message,abilities,talents)
 				return
@@ -514,7 +552,19 @@ async def mainProbius(client,message,texts):
 				continue
 			else:
 				output=await printSearch(abilities, talents, tier, hero, True)
-		
+				if output and hero in client.heroPages_test:
+					live_v=readVersion('hversion.txt')
+					test_v=readVersion('hversion-test.txt')
+					if test_v and live_v and parseVersion(test_v) > parseVersion(live_v):
+						try:
+							(test_abilities,test_talents)=client.heroPages_test[hero]
+							test_output=await printSearch(test_abilities, test_talents, tier, hero, True)
+							if test_output != output:
+								live_diff, ptr_diff = diffTierOutput(output, test_output)
+								output='**Live ['+live_v+']**\n'+live_diff+'\n\n**PTR ['+test_v+']**\n'+ptr_diff
+						except:
+							pass
+
 		if len(output)==2:#If len is 2, then it's an array with output split in half
 			if message.channel.name=='rage':
 				await message.channel.send(output[0].upper())
