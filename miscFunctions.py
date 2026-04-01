@@ -55,23 +55,6 @@ async def vote(message,text):
 		await message.add_reaction('\U0001f44d')
 		await message.add_reaction('\U0001f44e')
 
-async def deleteMessages(author,ping,client):
-	guild=client.get_guild(DiscordGuildIDs['WindStriders'])#Wind Striders
-	if DiscordRoleIDs['Olympian'] not in [role.id for role in author.roles]:
-		return
-		
-	userId=int(ping.replace(' ','').replace('!','')[2:-1])
-	deletedCount=0
-	for channel in guild.text_channels:
-		try:
-			async for message in channel.history(limit=20):
-				if message.author.id==userId:
-					await message.delete()
-					deletedCount+=1
-		except:
-			pass
-	await guild.get_channel(DiscordChannelIDs['Pepega']).send('Deleted '+str(deletedCount)+' messages from '+ping)
-
 async def removeEmbeds(message):#Some embeds are instant, others are edited in by discord. Call in both on_message and on_message_edit
 	if message.embeds:
 		for i in ['forums.blizzard.com','psionic-storm.com','heroespatchnotes.com','#', 'twitch.tv', 'youtube.com/shorts']:#Forum embeds are huge image, psionic-storm builds/talent/# embeds link to wrong build number or blank calculator
@@ -128,22 +111,13 @@ async def sortList(message):
 	await message.channel.send('\n'.join(a))
 
 async def schedule(message):
+
 	await message.channel.send('''Monday: PTR patch
 Tuesday: Content patch (for NA. Early wednesday morning for EU)
 Wednesday: Balance patch''')
 
 def findMentions(message):
 	return ['<@'+i[:i.index('>')+1] for i in message.content.replace('!','').split('<@')[1:]]
-
-async def coaching(message):
-	if 859488289559805972 in [i.id for i in message.author.roles]:
-		await message.channel.send('<@&860563593090564107> Coach '+message.author.mention+' is running a live session! Head down to <#859854861750763570> to check it out!')
-	else:
-		await message.channel.send(message.author.mention+' you must be a coach to host coaching sessions.')
-
-async def wrongChannelBuild(message):
-	await message.guild.get_channel(DiscordChannelIDs['Probius']).send(message.author.mention+' Please call builds in this channel to avoid cluttering the other channels!')
-	await message.guild.get_channel(DiscordChannelIDs['Probius']).send('https://cdn.discordapp.com/attachments/604394753722941451/892843516722569266/help_probius_clean_up1.png')
 
 async def randomBuild(client, channel, hero):
 	if hero=='Random':
@@ -200,25 +174,3 @@ async def countdown(message,text):
 		t=str(t)
 		await message.channel.send('<t:'+t+'> (<t:'+t+':R>)')
 
-async def iAmName(message):
-	if message.channel.guild.id!=535256944106012694 or message.author.id!=224975834346291210:
-		return
-
-	index=message.content.lower().find("i'm ")+4
-	if index==3:#no result
-		index=message.content.lower().find("i am ")+5
-		if index==4:#no result
-			return
-
-	#Discord names must be between 2 and 32 characters
-	wordList=message.content[index:].split(' ')
-	newName=wordList.pop(0)
-	for word in wordList:
-		proposedName=f"{newName} {word}"
-		if len(proposedName)<32:
-			newName=proposedName
-		else:
-			break
-
-	if len(newName)<=2:return
-	await message.author.edit(nick=newName)

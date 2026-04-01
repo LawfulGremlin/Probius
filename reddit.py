@@ -18,7 +18,7 @@ keywords={
 'Samuro':[DiscordUserIDs['Blackstorm']],
 'Zera':[DiscordUserIDs['Derenash']],
 'Valeera':[684944498039455781, 738440231568801914],
-'Orphea':[410481791204327424, 738440231568801914],
+'Orphea':[DiscordUserIDs['twinkles'], 738440231568801914],
 'Deathwing':[204893952908853248],
 'Time stop':[268871972778147870],
 'Li-Ming':[738440231568801914]
@@ -32,10 +32,10 @@ REDDIT_ID_RE = re.compile(
 )
 
 DISCORD_REDDIT_DEDUPE_CHANNEL_IDS = {
-	DiscordChannelIDs['RedditPosts'],
-	DiscordChannelIDs['General'],
-	DiscordChannelIDs['NormieHeroes'],
-	DiscordChannelIDs['Samuro'],
+	DiscordChannelIDs['WS.RedditPosts'],
+	DiscordChannelIDs['WS.General'],
+	DiscordChannelIDs['WS.NormieHeroes'],
+	DiscordChannelIDs['WS.Samuro'],
 }
 
 DISCORD_REDDIT_DEDUPE_LIMIT = 50
@@ -165,18 +165,18 @@ async def redditForwarding(client):#Called every 60 seconds
 						if author in discordnames:
 							author=discordnames[author]
 						LOGGER.info('%s by %s', title, author)
-						await send_to_channel(DiscordChannelIDs['RedditPosts'], '**{}** by {}: {}'.format(title,author,url))#reddit-posts
+						await send_to_channel(DiscordChannelIDs['WS.RedditPosts'], '**{}** by {}: {}'.format(title,author,url))#reddit-posts
 						if toPing:
-							await send_to_channel(DiscordChannelIDs['General'], '**{}** by {}: {}\n{}'.format(title,author,url,toPing))#general
+							await send_to_channel(DiscordChannelIDs['WS.General'], '**{}** by {}: {}\n{}'.format(title,author,url,toPing))#general
 						if author=='Gnueless' and 'rotation' in title.lower():
-							general_channel = client.get_channel(DiscordChannelIDs['General'])
+							general_channel = client.get_channel(DiscordChannelIDs['WS.General'])
 							if general_channel is not None:
 								await rotation(general_channel)
 							else:
 								LOGGER.warning('redditForwarding skipped rotation post: General channel unavailable')
 					else:
 						LOGGER.info('%s by %s', title, author)
-						channel=[DiscordChannelIDs['NormieHeroes'],DiscordChannelIDs['Samuro']]['samuro' in title.lower()]#Normie-heroes or Samuro
+						channel=[DiscordChannelIDs['WS.NormieHeroes'],DiscordChannelIDs['WS.Samuro']]['samuro' in title.lower()]#Normie-heroes or Samuro
 						await send_to_channel(channel, '**{}** {}{}'.format(title,toPing,url))
 
 async def redditSearch(client,message,text):

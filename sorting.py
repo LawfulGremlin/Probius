@@ -2,7 +2,7 @@ from discordIDs import *
 from lfg import roleAliases
 
 async def trim(text):
-	toRemove=[' ','#','<@&{}>'.format(DiscordRoleIDs['Olympian']),'*','\n','league','and']
+	toRemove=[' ','#','<@&{}>'.format(DiscordRoleIDs['WS.Olympian']),'*','\n','league','and']
 	text=text.lower()
 	for i in toRemove:
 		text=text.replace(i,'')
@@ -12,21 +12,21 @@ async def trim(text):
 
 async def sort(roles,member,olympian,client):
 	guild=client.get_guild(DiscordGuildIDs['WindStriders'])#Wind Striders
-	channel=guild.get_channel(DiscordChannelIDs['General'])#general
-	if DiscordRoleIDs['Olympian'] not in [role.id for role in olympian.roles]:
+	channel=guild.get_channel(DiscordChannelIDs['WS.General'])#general
+	if DiscordRoleIDs['WS.Olympian'] not in [role.id for role in olympian.roles]:
 		#await channel.send('You need to be a mod to sort users!')
 		return
 	if len(roles)!=3:
 		#await channel.send('Need ping and 3 roles')
 		return
 	#Colours
-	blue1=guild.get_role(577565172357398530)
-	magenta=guild.get_role(653065647563210792)
+	blue1=guild.get_role(DiscordRoleIDs['WS.ColourBlue'])
+	magenta=guild.get_role(DiscordRoleIDs['WS.ColourMagenta'])
 	#Ranks and regions
-	gm=guild.get_role(559024554144694303)
-	sea=guild.get_role(562624527020982293)
+	gm=guild.get_role(DiscordRoleIDs['WS.GrandMaster'])
+	sea=guild.get_role(DiscordRoleIDs['WS.RegionSEA'])
 
-	unsorted=guild.get_role(DiscordRoleIDs['Unsorted'])
+	unsorted=guild.get_role(DiscordRoleIDs['WS.Unsorted'])
 
 	if unsorted not in member.roles:
 		#await channel.send('**'+member.name+'** is not unsorted')
@@ -55,7 +55,7 @@ async def sort(roles,member,olympian,client):
 	if len(rolesToAdd)!=3:
 		#await channel.send('At least one role was wrong or inaccessible. Valid roles: '+', '.join([i.name for i in rolesToAdd]))
 		return
-	memberRole=guild.get_role(DiscordRoleIDs['Member'])
+	memberRole=guild.get_role(DiscordRoleIDs['WS.Member'])
 	rolesToAdd.append(memberRole)
 	await member.add_roles(*rolesToAdd)
 	await member.remove_roles(unsorted)
@@ -86,7 +86,7 @@ async def sortFromReaction(message,reacterID,client):
 	await sort(roles,unsortedMember,olympian,client)
 
 async def giveLfgRoles(member,client):
-	reaction=[i for i in (await (await client.fetch_channel(634012658625937408)).fetch_message(693380327413907487)).reactions if i.emoji=='🇱'][0]
+	reaction=[i for i in (await (await client.fetch_channel(DiscordChannelIDs['WS.ServerRules'])).fetch_message(DiscordMessageIDs['WS.ServerRules1'])).reactions if i.emoji=='🇱'][0]
 	users=await reaction.users().flatten()
 	if member.id not in (i.id for i in users):
 		return

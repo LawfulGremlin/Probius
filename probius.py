@@ -8,7 +8,6 @@ import asyncio
 import io
 import re
 import random
-import difflib
 import discord
 import time
 from sys import argv#Where to get the JSONs
@@ -21,13 +20,15 @@ from heroesTalents import *		#The function that imports the hero pages
 from emojis import *			#Emojis
 from miscFunctions import*		#Edge cases and help message
 from getProbiusToken import *	#The token is in an untracked file because this is a public Github repo
+from talentComparison import *	#Live vs PTR talent diffing
+from windstriders import *		#Wind Striders server-specific features
 
 import os
 def getProbiusToken():
 	"""Return the Discord bot token.
 	Supports two sources, in priority order:
 	  1. DISCORD_TOKEN env var pointing to a Docker secrets file path
-	     (e.g. /run/secrets/probius_token) — file contents are read and returned.
+		 (e.g. /run/secrets/probius_token) — file contents are read and returned.
 	  2. DISCORD_TOKEN env var containing the token value directly.
 	Falls back to the original getProbiusToken() from the imported module if
 	DISCORD_TOKEN is not set at all.
@@ -57,11 +58,7 @@ from blizztrack import BlizztrackService
 import logging
 logging.basicConfig(level=logging.INFO)
 
-botChannels={'Wind Striders':DiscordChannelIDs['Probius'],'De Schuifpui Schavuiten':687351660502057021, 'Nexus Schoolhouse':813507461427363870, 'Inting for Ruby':834135120154853416}
-
-wsReactionRoles={'🇧':DiscordRoleIDs['BalanceTeam'],'🇩':DiscordRoleIDs['DraftAddict'],'🇸':860563593090564107,
-'<:Tank:837022373689426061>':836967732007665684,'<:Offlane:837022541197475941>':836969169437982720,'<:RangedAssassin:837024261826019348>':836974208533004288,
-'<:Healer:837024194486075443>':836978312659599370,'<:Flex:885591708778250350>':885616267942309908}
+botChannels={'Wind Striders':DiscordChannelIDs['WS.Probius']}
 
 drafts={}#Outside of client so it doesn't reset on periodic restarts or [restart]
 lastDraftMessageDict={}
@@ -101,92 +98,16 @@ SUPPRESS_USER_IDS = [#It can generally be assumed that suppression is not active
 
 blizztrack_service=BlizztrackService()
 def read_probius_version() -> str:
+	from heroesTalents import _resolve_data_path
 	try:
-		with open('hversion.txt', 'r', encoding='utf-8') as f:
+		resolved_path = _resolve_data_path('.hversion', is_test=False)
+		if not resolved_path:
+			return "unknown (.hversion missing)"
+		with open(resolved_path, 'r', encoding='utf-8') as f:
 			v = f.read().strip()
-			return v or "unknown (empty hversion.txt)"
-	except FileNotFoundError:
-		return "unknown (hversion.txt missing)"
+			return v or "unknown (empty .hversion)"
 	except Exception as e:
-		return f"unknown (error reading hversion.txt: {e})"
-
-def diffUnderline(live_str, ptr_str):
-	"""Word-level diff. Underline changed words on each side.
-	Deletions marked on live side only; insertions on ptr side only.
-	Empty tokens from formatting whitespace are preserved but never wrapped."""
-	# Split on spaces but keep empty tokens for spacing fidelity
-	live_words = live_str.split(' ')
-	ptr_words = ptr_str.split(' ')
-	matcher = difflib.SequenceMatcher(None, live_words, ptr_words)
-	live_out = []
-	ptr_out = []
-	for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-		live_chunk = live_words[i1:i2]
-		ptr_chunk = ptr_words[j1:j2]
-		# Filter empty strings before deciding whether to underline
-		live_nonempty = [w for w in live_chunk if w.strip()]
-		ptr_nonempty = [w for w in ptr_chunk if w.strip()]
-		if tag == 'equal':
-			live_out.extend(live_chunk)
-			ptr_out.extend(ptr_chunk)
-		elif tag == 'replace':
-			if live_nonempty:
-				live_out.append('__' + ' '.join(live_nonempty) + '__')
-			else:
-				live_out.extend(live_chunk)
-			if ptr_nonempty:
-				ptr_out.append('__' + ' '.join(ptr_nonempty) + '__')
-			else:
-				ptr_out.extend(ptr_chunk)
-		elif tag == 'delete':
-			if live_nonempty:
-				live_out.append('__' + ' '.join(live_nonempty) + '__')
-				# Mark deletion position on ptr with a visible marker
-				ptr_out.append('__(deleted)__')
-			else:
-				live_out.extend(live_chunk)
-		elif tag == 'insert':
-			if ptr_nonempty:
-				ptr_out.append('__' + ' '.join(ptr_nonempty) + '__')
-			else:
-				ptr_out.extend(ptr_chunk)
-	return ' '.join(live_out), ' '.join(ptr_out)
-
-
-def splitTalents(tier_output):
-	"""Split a printTier output into individual talent strings.
-	Talents start with **[ so we split on that boundary."""
-	parts = re.split(r'(?=\*\*\[)', tier_output)
-	return [p for p in parts if p.strip()]
-
-
-def diffTierOutput(live_output, test_output):
-	"""Diff talent by talent (not line by line) to avoid misalignment from Quest/Reward newlines."""
-	live_talents = splitTalents(live_output)
-	ptr_talents = splitTalents(test_output)
-	# Match talents by header (the **[N] Name:** part)
-	def get_header(t):
-		return t.split(':**')[0] if ':**' in t else t[:20]
-	live_map = {get_header(t): t for t in live_talents}
-	ptr_map = {get_header(t): t for t in ptr_talents}
-	all_headers = list(live_map.keys())
-	for h in ptr_map:
-		if h not in all_headers:
-			all_headers.append(h)
-	live_result = []
-	ptr_result = []
-	for h in all_headers:
-		l = live_map.get(h, '')
-		p = ptr_map.get(h, '')
-		if l == p:
-			live_result.append(l.rstrip('\n'))
-			ptr_result.append(p.rstrip('\n'))
-		else:
-			ld, pd = diffUnderline(l.rstrip('\n'), p.rstrip('\n'))
-			live_result.append(ld)
-			ptr_result.append(pd)
-	return '\n'.join(live_result), '\n'.join(ptr_result)
-
+		return f"unknown (error reading .hversion: {e})"
 
 async def mainProbius(client,message,texts):
 	global exitBool
@@ -200,7 +121,7 @@ async def mainProbius(client,message,texts):
 		guildname='Schuifpui' if guildname=='De Schuifpui Schavuiten' else guildname
 		channelName=message.channel.name
 		channelName='hots' if channelName=='heroes-got-canceled' else channelName
-		loggingMessage=guildname+' '*(15-len(guildname))+channelName+' '+' '*(17-len(channelName))+str(message.author.name)+' '*(18-len(str(message.author.name)))+' '+message.content
+		loggingMessage=f"{guildname}, {channelName}, {message.author.name}#{message.author.discriminator} ({message.author.id}) issued command {message.content}"
 		print(loggingMessage)
 
 	for text in texts:
@@ -236,7 +157,7 @@ async def mainProbius(client,message,texts):
 			await schedule(message)
 			continue
 		if command =='sortlist':
-			if message.guild.get_role(DiscordRoleIDs['Olympian']) not in message.author.roles:#Not mod
+			if message.guild.get_role(DiscordRoleIDs['WS.Olympian']) not in message.author.roles:#Not mod
 				await message.channel.send(message.author.mention+' <:bonk:761981366744121354>')
 			else:
 				await sortList(message)
@@ -255,7 +176,7 @@ async def mainProbius(client,message,texts):
 			await memberCount(message.channel)
 			continue
 		if command in versionAliases:
-			with open('hversion.txt', 'r', encoding='utf-8') as version_file:
+			with open('.hversion', 'r', encoding='utf-8') as version_file:
 				version = version_file.read().strip()
 			blizztrack_versions = await blizztrack_service.get_versions()
 			if blizztrack_versions is None:
@@ -329,19 +250,11 @@ async def mainProbius(client,message,texts):
 				await message.delete()
 				continue
 		if command== 'unsorted' and message.channel.guild.name=='Wind Striders':
-			if DiscordRoleIDs['Olympian'] in [role.id for role in message.author.roles]:#Olympian
-				channel = client.get_channel(DiscordChannelIDs['General'])#WSgeneral
-				role=channel.guild.get_role(DiscordRoleIDs['Unsorted'])#UNSORTED
-				rulesChannel=channel.guild.get_channel(DiscordChannelIDs['ServerRules'])#server-rules
-				await channel.send('Note to all '+role.mention+': '+client.welcomeMessage)
-				await channel.send(content='https://cdn.discordapp.com/attachments/576018992624435220/743917827718905896/sorting.gif',file=discord.File('WS colours.png'))
-				continue
+			await ws_command_unsorted(message, client)
+			continue
 		if command=='byprobiusbepurged' and message.channel.guild.name=='Wind Striders':
-			if DiscordRoleIDs['Olympian'] in [role.id for role in message.author.roles]:
-				people=[i for i in message.channel.guild.members if DiscordRoleIDs['Unsorted'] in [role.id for role in i.roles]]
-				for person in people:
-					await message.channel.guild.kick(person,reason='Did not sort in time!')
-				continue
+			await ws_command_byprobiusbepurged(message, client)
+			continue
 		if command == 'vote':
 			await vote(message,text)
 			continue
@@ -372,10 +285,10 @@ async def mainProbius(client,message,texts):
 			continue
 		if command in buildsAliases:
 			if len(text)==2:
-				if message.channel.guild.id==DiscordGuildIDs['WindStriders'] and message.channel.id!=DiscordChannelIDs['Probius'] and message.content[0]=='[':#In WS, not in #probius, first character is [
-					if message.guild.get_role(DiscordRoleIDs['CoreMember']) not in message.author.roles:#Not core member
+				if message.channel.guild.id==DiscordGuildIDs['WindStriders'] and message.channel.id!=DiscordChannelIDs['WS.Probius'] and message.content[0]=='[':#In WS, not in #probius, first character is [
+					if message.guild.get_role(DiscordRoleIDs['WS.CoreMember']) not in message.author.roles:#Not core member
 						await wrongChannelBuild(message)
-						await guide(aliases(text[1]),message.guild.get_channel(DiscordChannelIDs['Probius']))
+						await guide(aliases(text[1]),message.guild.get_channel(DiscordChannelIDs['WS.Probius']))
 						continue
 				await guide(aliases(text[1]),message.channel)
 			else:
@@ -432,10 +345,10 @@ async def mainProbius(client,message,texts):
 		hero=aliases(hero)
 		if len(text)==2:#If user switches to hero first, then build/quote
 			if text[1] in buildsAliases:
-				if message.channel.guild.id==DiscordGuildIDs['WindStriders'] and message.channel.id!=DiscordChannelIDs['Probius']:#In WS, not in #probius
-					if message.guild.get_role(DiscordRoleIDs['CoreMember']) not in message.author.roles:#Not core member
+				if message.channel.guild.id==DiscordGuildIDs['WindStriders'] and message.channel.id!=DiscordChannelIDs['WS.Probius']:#In WS, not in #probius
+					if message.guild.get_role(DiscordRoleIDs['WS.CoreMember']) not in message.author.roles:#Not core member
 						await wrongChannelBuild(message)
-						await guide(hero,message.guild.get_channel(DiscordChannelIDs['Probius']))
+						await guide(hero,message.guild.get_channel(DiscordChannelIDs['WS.Probius']))
 						continue
 				await guide(hero,message.channel)
 				continue
@@ -473,19 +386,22 @@ async def mainProbius(client,message,texts):
 			if ',' in tier and any(i in tier for i in talentAliases):
 				await printAbilityTalents(message,abilities,talents,tier.split(',')[0],hero)
 				continue
-			if tier.isdigit():#Talent tier
-				tier=int(tier)
-				tier_index=int(tier/3)+int(hero=='Chromie' and tier not in [1,18])#Talents for Chromie come 2 lvls sooner, except lvl 1
-				output=printTier(talents,tier_index)
-				live_v=readVersion('hversion.txt')
-				test_v=readVersion('hversion-test.txt')
+			if tier.isdigit():
+				tier = int(tier)
+				tier_index = int(tier/3) + int(hero=='Chromie' and tier not in [1,18])
+				output = printTier(talents, tier_index)  # live default
+
+				live_v = readVersion('.hversion')
+				test_v = readVersion('.hversion-test')
 				if test_v and live_v and parseVersion(test_v) > parseVersion(live_v) and hero in client.heroPages_test:
 					try:
-						(_,test_talents)=client.heroPages_test[hero]
-						test_output=printTier(test_talents,tier_index)
-						if test_output != output:
-							live_diff, ptr_diff = diffTierOutput(output, test_output)
-							output='**Live ['+live_v+']**\n'+live_diff+'\n\n**PTR ['+test_v+']**\n'+ptr_diff
+						(_, test_talents) = client.heroPages_test[hero]
+						live_block, ptr_block = diffTierWithMoves(talents, test_talents, tier_index)
+						if ptr_block.strip() and ptr_block != live_block:
+							output = (
+								f"**Live [{live_v}]**\n{live_block}\n\n"
+								f"**PTR [{test_v}]**\n{ptr_block}"
+							)
 					except:
 						pass
 				tier=tier_index#Keep tier as index for rest of flow
@@ -502,8 +418,8 @@ async def mainProbius(client,message,texts):
 					output=printTier(talents,3-2*int(hero=='Varian'))#Varian's heroics are at lvl 4
 					if hero=='Deathwing':
 						output=abilities[3]+'\n'+output#Deathwing has Cataclysm baseline
-				live_v=readVersion('hversion.txt')
-				test_v=readVersion('hversion-test.txt')
+				live_v=readVersion('.hversion')
+				test_v=readVersion('.hversion-test')
 				if test_v and live_v and parseVersion(test_v) > parseVersion(live_v) and hero in client.heroPages_test:
 					try:
 						(test_abilities,test_talents)=client.heroPages_test[hero]
@@ -514,34 +430,44 @@ async def mainProbius(client,message,texts):
 							if hero=='Deathwing':
 								test_output=test_abilities[3]+'\n'+test_output
 						if test_output != output:
-							live_diff, ptr_diff = diffTierOutput(output, test_output)
-							output='**Live ['+live_v+']**\n'+live_diff+'\n\n**PTR ['+test_v+']**\n'+ptr_diff
+							live_block, ptr_block = diffHeroicOutput(output, test_output)
+							output = (
+								f"**Live [{live_v}]**\n{live_block}\n\n"
+								f"**PTR [{test_v}]**\n{ptr_block}"
+							)
 					except:
 						pass
 			elif len(tier)==1 and tier in 'dqwe':#Ability (dqwe)
 				output=printAbility(abilities,tier)
-				live_v=readVersion('hversion.txt')
-				test_v=readVersion('hversion-test.txt')
+				live_v=readVersion('.hversion')
+				test_v=readVersion('.hversion-test')
 				if test_v and live_v and parseVersion(test_v) > parseVersion(live_v) and hero in client.heroPages_test:
 					try:
 						(test_abilities,_)=client.heroPages_test[hero]
 						test_output=printAbility(test_abilities,tier)
 						if test_output != output:
-							live_diff, ptr_diff = diffTierOutput(output, test_output)
-							output='**Live ['+live_v+']**\n'+live_diff+'\n\n**PTR ['+test_v+']**\n'+ptr_diff
+							live_diff, ptr_diff = diffAbilityOutput(output, test_output)
+							output = (
+								f"**Live [{live_v}]**\n{live_diff}\n\n"
+								f"**PTR [{test_v}]**\n{ptr_diff}"
+							)
 					except:
 						pass
-			elif tier=='trait':
-				output=printAbility(abilities,'d')
-				live_v=readVersion('hversion.txt')
-				test_v=readVersion('hversion-test.txt')
+			elif tier == 'trait':
+				output = printAbility(abilities, 'd')
+				live_v = readVersion('.hversion')
+				test_v = readVersion('.hversion-test')
 				if test_v and live_v and parseVersion(test_v) > parseVersion(live_v) and hero in client.heroPages_test:
 					try:
-						(test_abilities,_)=client.heroPages_test[hero]
-						test_output=printAbility(test_abilities,'d')
+						(test_abilities, _) = client.heroPages_test[hero]
+						test_output = printAbility(test_abilities, 'd')
 						if test_output != output:
-							live_diff, ptr_diff = diffTierOutput(output, test_output)
-							output='**Live ['+live_v+']**\n'+live_diff+'\n\n**PTR ['+test_v+']**\n'+ptr_diff
+							live_diff, ptr_diff = diffAbilityOutput(output, test_output)
+							output = (
+								f"**Live [{live_v}]**\n{live_diff}\n\n"
+								f"**PTR [{test_v}]**\n{ptr_diff}"
+							)
+
 					except:
 						pass
 			elif tier =='all':
@@ -551,17 +477,24 @@ async def mainProbius(client,message,texts):
 				await message.channel.send('<https://heroesofthestorm.gamepedia.com/Data:'+hero+'#Skills>')
 				continue
 			else:
-				output=await printSearch(abilities, talents, tier, hero, True)
+				output = await printSearch(abilities, talents, tier, hero, True)
 				if output and hero in client.heroPages_test:
-					live_v=readVersion('hversion.txt')
-					test_v=readVersion('hversion-test.txt')
+					live_v = readVersion('.hversion')
+					test_v = readVersion('.hversion-test')
 					if test_v and live_v and parseVersion(test_v) > parseVersion(live_v):
 						try:
-							(test_abilities,test_talents)=client.heroPages_test[hero]
-							test_output=await printSearch(test_abilities, test_talents, tier, hero, True)
+							(test_abilities, test_talents) = client.heroPages_test[hero]
+							test_output = await printSearch(test_abilities, test_talents, tier, hero, True)
 							if test_output != output:
-								live_diff, ptr_diff = diffTierOutput(output, test_output)
-								output='**Live ['+live_v+']**\n'+live_diff+'\n\n**PTR ['+test_v+']**\n'+ptr_diff
+								live_block, ptr_block = diffSearchOutput(
+									output, test_output,
+									abilities, talents,
+									test_abilities, test_talents
+								)
+								output = (
+									f"**Live [{live_v}]**\n{live_block}\n\n"
+									f"**PTR [{test_v}]**\n{ptr_block}"
+								)
 						except:
 							pass
 
@@ -609,8 +542,6 @@ def findTexts(message):
 		allTexts+=texts
 	return allTexts
 
-#char=[[247677408386351105,'<:GoToChar:793111041046609951>',time.time()],[129702871837966336,'<:tww2:793399028611285022>',time.time()]]#[ID, emoji, time]
-char=[]
 class MyClient(discord.Client):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -621,6 +552,7 @@ class MyClient(discord.Client):
 		# create the background task and run it in the background
 		self.bgTask0 = self.loop.create_task(self.bgTaskSubredditForwarding())
 		self.bgTask1 = self.loop.create_task(self.bgTaskBlizztrackVersionCheck())
+
 		self.heroPages={}
 		self.heroPages_test={}
 		self.lastWelcomeImage=[]
@@ -628,12 +560,13 @@ class MyClient(discord.Client):
 		self.ready=False#Wait until ready before taking commands
 
 		#Region:region lfg
-		self.wsLfgRoles={562624319524438057:780200569465471008,#EU
-		562624364785434635:780200062713724948,#NA
-		562624406766223371:780200585314959390,#Asia
-		562624486499680266:780219236416749578,#CN
-		562624583342227458:780200579375824897,#LatAM
-		562624527020982293:780219683651190785}#SEA
+		self.wsLfgRoles={
+		DiscordRoleIDs['WS.RegionEU']:DiscordRoleIDs['WS.LfgEU'],
+		DiscordRoleIDs['WS.RegionNA']:DiscordRoleIDs['WS.LfgNA'],
+		DiscordRoleIDs['WS.RegionAsia']:DiscordRoleIDs['WS.LfgAsia'],
+		DiscordRoleIDs['WS.RegionCN']:DiscordRoleIDs['WS.LfgCN'],
+		DiscordRoleIDs['WS.RegionLatAM']:DiscordRoleIDs['WS.LfgLatAM'],
+		DiscordRoleIDs['WS.RegionSEA']:DiscordRoleIDs['WS.LfgSEA']}
 		self.rulesChannel=None
 		self.welcomeMessage=''
 		self.botChannels=botChannels
@@ -694,20 +627,10 @@ class MyClient(discord.Client):
 		await self.check_blizztrack_versions(announce_if_first_run=True)
 		logging.info("Probius running version: %s", read_probius_version())
 		print('Ready!')
-		self.rulesChannel=self.get_channel(DiscordChannelIDs['ServerRules'])#server-rules
-		if self.rulesChannel is not None:
-			self.welcomeMessage = (
-				'Please read ' + self.rulesChannel.mention +
-				' and type here your **`Region`, `Rank`, and `Preferred Colour`**, separated by commas, to get sorted and unlock the rest of the channels <:OrphAYAYA:657172520092565514>'
-			)
-		else:
-			self.welcomeMessage = (
-				'Please read the rules channel and type here your **`Region`, `Rank`, and `Preferred Colour`**, separated by commas, to get sorted and unlock the rest of the channels <:OrphAYAYA:657172520092565514>'
-			)
-			print("WARNING: rulesChannel not found; welcomeMessage uses fallback text.")
+		await ws_on_ready(self)
 
 	async def on_message(self, message):
-		print(f"Received: {message.content} from {message.author} (channel: {message.channel})")
+		print(f"{message.channel.guild}, {message.channel.name}, {message.author.name}#{message.author.discriminator} ({message.author.id}) wrote: {message.content}")
 		## Repeat command for Probius (moldy) - Not suppressed
 		if '[' in message.content:
 			for txt in findTexts(message):
@@ -720,43 +643,20 @@ class MyClient(discord.Client):
 		if await self.should_suppress_actions():
 			return
 		await super().on_message(message) if hasattr(super(), "on_message") else None
-		for i in char:
-			if message.author.id==i[0] and time.time()-i[2]>300 and message.channel.guild.id==535256944106012694:#5 minutes since last reaction
-				i[2]=time.time()
-				await message.add_reaction(i[1])
-		if ('@everyone' in message.content or '@here' in message.content) and message.guild.id==535256944106012694:
-			await message.add_reaction('<:LEVEL2AAAA:923294790278324315>')
-		await iAmName(message)
+		await ws_on_message(message, self)
 		pingNames={'medimold':DiscordUserIDs['medimold'],'libraries':DiscordUserIDs['libraries'], 'twinkles':DiscordUserIDs['twinkles']}
 		pingList=[pingNames[i] for i in pingNames.keys() if '@'+i in message.content.replace(' ','').lower()]
 		if pingList:
 			await message.channel.send(' '.join(['<@'+str(i)+'>' for i in pingList]))
-			
-		if message.embeds and message.channel.id==DiscordChannelIDs['General'] and 'View tweet' in message.content:#Message with embed in #general
-			await message.channel.send(message.embeds[0].thumbnail.url)
-			await message.edit(suppress=True)
-		if message.author.id==272526395337342977 and message.channel.id==DiscordChannelIDs['General']:#Blizztrack posts in general
-			try:
-				e=message.embeds[0].fields[3]
-				if e.name=='Full patch notes at':
-					output='Patch notes!\n'+e.value
-					await message.channel.send('@everyone '+output)
-			except:pass
 		if message.author.id==DiscordUserIDs['Gooey']:
 			if 'explod' in message.content.lower():
 				await message.add_reaction('<:explodes:955458830244913153>')
-				#await message.channel.send('https://cdn.discordapp.com/attachments/741762417976934460/954076412590063646/unknown.png')
 			if 'a'==message.content.lower():
 				await message.add_reaction("🅰")
-				#await message.channel.send("https://cdn.discordapp.com/attachments/607922629902598154/1150784393762316288/A.mp4")
 		if message.author.bot:#Don't respond to bots
 			return
-		try:
-			if DiscordRoleIDs['Unsorted'] in [role.id for role in message.author.roles]:#Unsorted
-				await sortFromReaction(message,DiscordUserIDs['Probius'],self)
-		except:pass
 		if 'baelog' in message.content.lower():
-			if message.channel.guild.id==DiscordGuildIDs['WindStriders']:await client.get_channel(DiscordChannelIDs['Probius']).send(message.author.mention+'Ba**LE**og\nhttps://i.imgur.com/Nrcg11Z.png')
+			if message.channel.guild.id==DiscordGuildIDs['WindStriders']:await client.get_channel(DiscordChannelIDs['WS.Probius']).send(message.author.mention+'Ba**LE**og\nhttps://i.imgur.com/Nrcg11Z.png')
 			else:await message.channel.send('Ba**LE**og\nhttps://i.imgur.com/Nrcg11Z.png')
 		if self.ready==False:
 			return
@@ -771,16 +671,9 @@ class MyClient(discord.Client):
 		if await self.should_suppress_actions():
 			return
 		await super().on_message_edit(before, after) if hasattr(super(), "on_message_edit") else None
-		#Don't respond to ourselves
-		if after.embeds and after.channel.id==DiscordChannelIDs['General'] and 'New dev tweet!' in after.content:#Message with embed in #general
-			await after.channel.send(after.embeds[0].thumbnail.url)
-			await after.edit(suppress=True)
+		await ws_on_message_edit(before, after, self)
 		if before.author.bot:
 			return
-		try:
-			if DiscordRoleIDs['Unsorted'] in [role.id for role in after.author.roles]:#Unsorted
-				await sortFromReaction(after,DiscordUserIDs['Probius'],self)
-		except:pass
 		if '[' in after.content:
 			try:
 				beforeTexts=findTexts(before)
@@ -818,24 +711,13 @@ class MyClient(discord.Client):
 			message=await channel.fetch_message(payload.message_id)
 		except:
 			return
-		if message.author.id==670832046389854239:#Advisor wrote message
+		if message.author.id==DiscordUserIDs['AdvisorBot']:#Advisor wrote message
 			return
-		if message.id==799711541708193803:#NSH draft
-			if str(payload.emoji)=='🇩':
-				await client.get_guild(183275001439322112).get_member(payload.user_id).add_roles(client.get_guild(183275001439322112).get_role(799678402201255956))
-				return
-		elif message.id in [693380327413907487,885614990386675764]:#WS Server rules
-			member=client.get_guild(DiscordGuildIDs['WindStriders']).get_member(payload.user_id)
-			if str(payload.emoji) in wsReactionRoles:
-				await member.add_roles(client.get_guild(DiscordGuildIDs['WindStriders']).get_role(wsReactionRoles[str(payload.emoji)]))
-			if str(payload.emoji)=='🇱':
-				await giveLfgRoles(member,self)
-
-		elif self.user and message.author.id==self.user.id:#Message is from Probius
+		if await ws_on_reaction_add(payload, message, member, self):
+			return
+		if self.user and message.author.id==self.user.id:#Message is from Probius
 			if str(payload.emoji)=='👎':#downvoted with thumbs down
-				if message.channel.id in [DiscordChannelIDs['RedditPosts']]:#Messages cannot be deleted from these channels
-					output=member.mention+'<:bonk:761981366744121354>'
-					await client.get_channel(DiscordChannelIDs['General']).send(output)#general
+				if await ws_check_reddit_downvote(message, member, self):
 					return
 				elif 'reddit.com' in message.content:
 					return
@@ -853,9 +735,6 @@ class MyClient(discord.Client):
 					output=member.name+' viewed talents'
 					await self.log_to_console(output)
 					return
-		elif str(payload.emoji)=='⚽' and message.channel.id==DiscordChannelIDs['General']:
-			await sortFromReaction(message,member.id,self)
-			return
 
 		if member.id in ProbiusPrivilegesIDs:#Reaction copying
 			await message.add_reaction(payload.emoji)
@@ -869,71 +748,28 @@ class MyClient(discord.Client):
 			message=await client.get_channel(payload.channel_id).fetch_message(payload.message_id)
 		except:
 			return
-		if message.id==799711541708193803:
-			if str(payload.emoji)=='🇩':
-				await client.get_guild(183275001439322112).get_member(payload.user_id).remove_roles(client.get_guild(183275001439322112).get_role(799678402201255956))
-		if message.id in [693380327413907487,885614990386675764]:
-			member=client.get_guild(DiscordGuildIDs['WindStriders']).get_member(payload.user_id)
-			if str(payload.emoji) in wsReactionRoles:
-				await member.remove_roles(client.get_guild(DiscordGuildIDs['WindStriders']).get_role(wsReactionRoles[str(payload.emoji)]))
-			if str(payload.emoji)=='🇱':
-				await removeLfgRoles(member,self)
+		await ws_on_reaction_remove(payload, message, member, self)
 
 	async def on_member_join(self,member):
 		if await self.should_suppress_actions():
 			return
-		await super().on_member_join(payload) if hasattr(super(), "on_member_join") else None
-		guild=member.guild
-		if guild.name=='Wind Striders':
-			'''if str(member.created_at)[:10]=='2022-05-28':#Banning every account created during listed date
-				print(member.created_at)
-				await member.ban()
-				return'''
-			await member.add_roles(guild.get_role(DiscordRoleIDs['Unsorted']))#UNSORTED role
-			print(member.name+' joined')
-			channel=guild.get_channel(DiscordChannelIDs['General'])#general
-			await channel.send('Welcome '+member.mention+'! '+self.welcomeMessage)
-			try:
-				for i in self.lastWelcomeImage:
-					await i.delete()
-			except:
-				pass
-			self.lastWelcomeImage =[await channel.send(file=discord.File('WS colours.png'))]
-			self.lastWelcomeImage.append(await channel.send('https://cdn.discordapp.com/attachments/576018992624435220/743917827718905896/sorting.gif'))
+		await super().on_member_join(member) if hasattr(super(), "on_member_join") else None
+		if member.guild.name=='Wind Striders':
+			await ws_on_member_join(member, self)
 
 	async def on_member_remove(self,member):
 		if await self.should_suppress_actions():
 			return
-		await super().on_member_remove(payload) if hasattr(super(), "on_member_remove") else None
-		guild=member.guild
-		if guild.name=='Wind Striders':
-			core_member_role = guild.get_role(DiscordRoleIDs['CoreMember'])
-			if core_member_role in member.roles:
-				secret_cabal = guild.get_channel(DiscordChannelIDs['SecretCabal'])
-				await secret_cabal.send(member.name+' left the server')
-				
-			unsorted=guild.get_role(DiscordRoleIDs['Unsorted'])
-			if unsorted in member.roles:	
-				print(member.name+' left (unsorted)')
-				channel=guild.get_channel(DiscordChannelIDs['MemberLeaves'])
-				await channel.send(member.name+' (unsorted) left <:samudab:578998204142452747>')
-				return
-				
-			print(member.name+' left')
-			channel=guild.get_channel(DiscordChannelIDs['MemberLeaves'])
-			await channel.send(member.name+' left the server <:samudab:578998204142452747>')
+		await super().on_member_remove(member) if hasattr(super(), "on_member_remove") else None
+		if member.guild.name=='Wind Striders':
+			await ws_on_member_remove(member, self)
 			
 	async def on_member_update(self,before,after):
 		if await self.should_suppress_actions():
 			return
-		await super().on_member_update(payload) if hasattr(super(), "on_member_update") else None
+		await super().on_member_update(before, after) if hasattr(super(), "on_member_update") else None
 		if after.guild.id==DiscordGuildIDs['WindStriders']:
-			core=after.guild.get_role(DiscordRoleIDs['CoreMember'])
-			olympian=after.guild.get_role(DiscordRoleIDs['Olympian'])
-			if core in after.roles and core not in before.roles:
-				await self.get_channel(DiscordChannelIDs['SecretCabal']).send('Welcome '+after.mention+'!')
-			if olympian in after.roles and olympian not in before.roles:
-				await self.get_channel(DiscordChannelIDs['Pepega']).send('Welcome '+after.mention+'!')
+			await ws_on_member_update(before, after, self)
 				
 	async def bgTaskSubredditForwarding(self):
 		await self.wait_until_ready()
@@ -968,7 +804,7 @@ class MyClient(discord.Client):
 			return
 
 		previous_state=self.blizztrackVersionState if isinstance(self.blizztrackVersionState,dict) else {}
-		probius_channel=self.get_channel(DiscordChannelIDs['Probius'])
+		probius_channel=self.get_channel(DiscordChannelIDs['WS.Probius'])
 		if not previous_state:
 			self.blizztrackVersionState=current_versions
 			blizztrack_service.write_version_state(current_versions)
@@ -977,7 +813,7 @@ class MyClient(discord.Client):
 			logging.info('Blizztrack initial state stored: %s', ' | '.join(self.blizztrack_summary_lines(current_versions)))			
 			return
 
-		probius_channel=self.get_channel(DiscordChannelIDs['Probius'])
+		probius_channel=self.get_channel(DiscordChannelIDs['WS.Probius'])
 		if probius_channel is None:
 			self.blizztrackVersionState=current_versions
 			blizztrack_service.write_version_state(current_versions)
@@ -1018,7 +854,7 @@ if '--blizztrack-check' in argv:
 			guild=self.get_guild(DiscordGuildIDs['WindStriders'])
 			try:
 				member=guild.get_member(after.id)
-				if guild.get_role(DiscordRoleIDs['CoreMember']) in guild.get_member(after.id).roles:pass
+				if guild.get_role(DiscordRoleIDs['WS.CoreMember']) in guild.get_member(after.id).roles:pass
 				else:return
 			except:return
 			channel=guild.get_channel(607922629902598154)

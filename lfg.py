@@ -18,7 +18,7 @@ async def lfg(channel,text,client):
 	inputRoles=[roleAliases(j) for j in text.replace(' ','').split(',')]
 	roles=[i for i in channel.guild.roles if i.name.lower().replace(' ','') in inputRoles]
 	people=[i for i in channel.guild.members if len(roles)==sum(1 for j in roles if j in i.roles)]
-	lfgRole=client.get_guild(DiscordGuildIDs['WindStriders']).get_role(DiscordRoleIDs['LFG'])
+	lfgRole=client.get_guild(DiscordGuildIDs['WindStriders']).get_role(DiscordRoleIDs['WS.LFG'])
 	if len(roles)!=len(inputRoles):
 		await channel.send('Invalid roles!')
 	elif people:

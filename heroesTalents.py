@@ -9,6 +9,8 @@ import nest_asyncio
 import re
 import html as htmlmod
 from bs4 import BeautifulSoup
+import os
+from pathlib import Path
 
 nest_asyncio.apply()
 
@@ -119,7 +121,7 @@ async def fetch(session, url):
 
 
 async def downloadHero(hero, client, patch):
-	with open('heroes-talents/' + hero + '.json') as page:
+	with _open_heroes_data_file(hero, is_test=False) as page:
 		page = loads(page.read())
 		abilities = []
 		if hero in ['ltmorales', 'valeera', 'deathwing', 'zarya']:
@@ -310,12 +312,52 @@ async def heroStats(hero, channel, allowRecursion=True):
 		except Exception as e:
 			await channel.send(f'``{hero}:`` Stat fetch failed: {type(e).__name__}: {e}')
 
+def _open_heroes_data_file(hero, is_test=False):
+	volume_folder = '/heroes-talents-test' if is_test else '/heroes-talents'
+	bundled_folder = 'heroes-talents-test' if is_test else 'heroes-talents'
+	filename = f'{hero}.json'
+
+	# Check if volume is mounted
+	volume_path = Path(volume_folder) / filename
+	if volume_path.exists():
+		return open(volume_path, 'r')
+
+	# Fall back to bundled folder
+	bundled_path = Path(bundled_folder) / filename
+	if bundled_path.exists():
+		return open(bundled_path, 'r')
+
+	raise FileNotFoundError(f'{filename} not found in {volume_folder} or {bundled_folder}')
+
+
+def _resolve_data_path(filename, is_test=False):
+	volume_folder = '/heroes-talents-test' if is_test else '/heroes-talents'
+	bundled_folder = 'heroes-talents-test' if is_test else 'heroes-talents'
+
+	# Check if volume is mounted
+	volume_path = Path(volume_folder) / filename
+	if volume_path.exists():
+		return str(volume_path)
+
+	# Fall back to bundled folder
+	bundled_path = Path(bundled_folder) / filename
+	if bundled_path.exists():
+		return str(bundled_path)
+
+	return None
+
+
 def readVersion(filename):
-	try:
-		with open(filename, 'r', encoding='utf-8') as f:
-			return f.read().strip()
-	except FileNotFoundError:
-		return ''
+	is_test = 'test' in filename
+	resolved_path = _resolve_data_path(filename, is_test=is_test)
+
+	if resolved_path:
+		try:
+			with open(resolved_path, 'r', encoding='utf-8') as f:
+				return f.read().strip()
+		except Exception:
+			return ''
+	return ''
 
 
 def parseVersion(v):
@@ -327,7 +369,7 @@ def parseVersion(v):
 
 async def downloadHeroTest(hero, client, patch):
 	try:
-		with open('heroes-talents-test/' + hero + '.json') as page:
+		with _open_heroes_data_file(hero, is_test=True) as page:
 			page = loads(page.read())
 			abilities = []
 			if hero in ['ltmorales', 'valeera', 'deathwing', 'zarya']:
