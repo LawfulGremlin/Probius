@@ -1,12 +1,23 @@
 import json
 import logging
 import re
+from pathlib import Path
 from typing import Dict, Iterable, Optional
 
 import aiohttp
 from bs4 import BeautifulSoup
 
 LOGGER = logging.getLogger(__name__)
+
+DATA_DIR = '/data'
+STATE_FILENAME = 'blizztrack_versions.json'
+
+
+def _resolve_state_file_path():
+    data_path = Path(DATA_DIR) / STATE_FILENAME
+    if data_path.parent.is_dir():
+        return str(data_path)
+    return STATE_FILENAME
 
 # Track keys -> BlizzTrack tact codes
 BLIZZTRACK_TRACKS = {
@@ -23,9 +34,17 @@ KNOWN_REGIONS = {
 }
 
 
+async def run_blizztrack_healthcheck_mode():
+    service = BlizztrackService()
+    logging.info('Starting blizztrack standalone healthcheck mode (no Discord token required).')
+    ok, versions = await service.run_healthcheck()
+    logging.info('Blizztrack standalone summary: %s', ' | '.join(service.summary_lines(versions)))
+    return 0 if ok else 1
+
+
 class BlizztrackService:
-    def __init__(self, state_file: str = 'blizztrack_versions.json', tracks: Optional[Dict[str, str]] = None):
-        self.state_file = state_file
+    def __init__(self, state_file: str = None, tracks: Optional[Dict[str, str]] = None):
+        self.state_file = state_file if state_file is not None else _resolve_state_file_path()
         self.tracks = tracks or BLIZZTRACK_TRACKS
 
     @staticmethod

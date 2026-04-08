@@ -1,7 +1,7 @@
 import discord
 import time
 from discordIDs import *
-from sorting import sortFromReaction, giveLfgRoles, removeLfgRoles
+from functionsPrint import printLarge
 
 # Reaction emoji → WS role ID mapping (used by ServerRules messages)
 wsReactionRoles = {
@@ -32,7 +32,7 @@ async def ws_on_member_join(member, client):
 			await i.delete()
 	except:
 		pass
-	client.lastWelcomeImage = [await channel.send(file=discord.File('WS colours.png'))]
+	client.lastWelcomeImage = [await channel.send(file=discord.File('serverWSColors.png'))]
 	client.lastWelcomeImage.append(await channel.send('https://cdn.discordapp.com/attachments/576018992624435220/743917827718905896/sorting.gif'))
 
 
@@ -124,7 +124,7 @@ async def ws_on_message(message, client):
 	if not message.author.bot:
 		try:
 			if DiscordRoleIDs['WS.Unsorted'] in [role.id for role in message.author.roles]:
-				await sortFromReaction(message, DiscordUserIDs['Probius'], client)
+				await sortFromReaction(message, DiscordUserIDs['Probius_asddsa-token'], client)
 		except:
 			pass
 	await iAmName(message)
@@ -138,7 +138,7 @@ async def ws_on_message_edit(before, after, client):
 	if not before.author.bot:
 		try:
 			if DiscordRoleIDs['WS.Unsorted'] in [role.id for role in after.author.roles]:
-				await sortFromReaction(after, DiscordUserIDs['Probius'], client)
+				await sortFromReaction(after, DiscordUserIDs['Probius_asddsa-token'], client)
 		except:
 			pass
 
@@ -171,7 +171,7 @@ async def ws_command_unsorted(message, client):
 		await channel.send('Note to all ' + role.mention + ': ' + client.welcomeMessage)
 		await channel.send(
 			content='https://cdn.discordapp.com/attachments/576018992624435220/743917827718905896/sorting.gif',
-			file=discord.File('WS colours.png'),
+			file=discord.File('serverWSColors.png'),
 		)
 
 
@@ -239,3 +239,132 @@ async def iAmName(message):
 	if len(newName) <= 2:
 		return
 	await message.author.edit(nick=newName)
+
+
+# ── LFG (Looking for Group) ───────────────────────────────────────────────────
+
+def roleAliases(role):
+	role='grandmaster' if role=='gm' else role
+	role='master' if role=='masters' else role
+	role='diamond' if role=='dia' else role
+	role='platinum' if role=='plat' else role
+	role='unranked' if role in ['ur','none','qm'] else role
+
+	role='eu' if role=='europe' else role
+	role='na' if role in ['northamerica','us','america','americas','usa'] else role
+	role='latam' if role in ['br','brazil'] else role
+
+	return role
+
+async def lfg(channel,text,client):
+	inputRoles=[roleAliases(j) for j in text.replace(' ','').split(',')]
+	roles=[i for i in channel.guild.roles if i.name.lower().replace(' ','') in inputRoles]
+	people=[i for i in channel.guild.members if len(roles)==sum(1 for j in roles if j in i.roles)]
+	lfgRole=client.get_guild(DiscordGuildIDs['WindStriders']).get_role(DiscordRoleIDs['WS.LFG'])
+	if len(roles)!=len(inputRoles):
+		await channel.send('Invalid roles!')
+	elif people:
+		peopleNames=[]
+		for i in people:
+			name=i.nick if i.nick else i.name
+			peopleNames.append('**'+name+'**' if lfgRole in i.roles else name)
+		await printLarge(channel,', '.join(peopleNames),',')
+	else:
+		await channel.send('No people found!')
+
+
+# ── Role sorting ──────────────────────────────────────────────────────────────
+
+async def trim(text):
+	toRemove=[' ','#','<@&{}>'.format(DiscordRoleIDs['WS.Olympian']),'*','\n','league','and']
+	text=text.lower()
+	for i in toRemove:
+		text=text.replace(i,'')
+	if '<@' in text:
+		text=text[:text.index('<')]+text[1+text.index('>'):]#Remove pings
+	return text
+
+async def sort(roles,member,olympian,client):
+	guild=client.get_guild(DiscordGuildIDs['WindStriders'])#Wind Striders
+	channel=guild.get_channel(DiscordChannelIDs['WS.General'])#general
+	if DiscordRoleIDs['WS.Olympian'] not in [role.id for role in olympian.roles]:
+		return
+	if len(roles)!=3:
+		return
+	#Colours
+	blue1=guild.get_role(DiscordRoleIDs['WS.ColourBlue'])
+	magenta=guild.get_role(DiscordRoleIDs['WS.ColourMagenta'])
+	#Ranks and regions
+	gm=guild.get_role(DiscordRoleIDs['WS.GrandMaster'])
+	sea=guild.get_role(DiscordRoleIDs['WS.RegionSEA'])
+
+	unsorted=guild.get_role(DiscordRoleIDs['WS.Unsorted'])
+
+	if unsorted not in member.roles:
+		return
+	roles=list(set(roles))
+	if len(roles)!=3:
+		return
+	rolesToAdd=[]
+	for role in roles:
+		try:
+			role=roleAliases(role)
+			for i in sorted(guild.roles):
+				if (i<=blue1 and i>=magenta) or (i<=gm and i>=sea):
+					if await trim(i.name)==await trim(role):
+						rolesToAdd.append(i)
+					elif await trim(i.name)==await trim(''.join([i for i in role if not i.isdigit()])):#Rank numbers
+						rolesToAdd.append(i)
+					elif await trim(i.name)==await trim(role+'1'):#Add colour #1
+						rolesToAdd.append(i)
+					else:
+						continue
+					raise Exception('Role done!')
+		except:
+			pass
+	if len(rolesToAdd)!=3:
+		return
+	memberRole=guild.get_role(DiscordRoleIDs['WS.Member'])
+	rolesToAdd.append(memberRole)
+	await member.add_roles(*rolesToAdd)
+	await member.remove_roles(unsorted)
+	await channel.send('**'+member.name+'** has been sorted!')
+	await giveLfgRoles(member,client)
+
+async def sortFromMessage(text,message,client):
+	unsortedMember,text=text.split('>')
+	unsortedMember+='>'
+	text=await trim(text)
+	guild=client.get_guild(DiscordGuildIDs['WindStriders'])#Wind Striders
+	unsortedMember=guild.get_member(int(unsortedMember.replace(' ','')[2:-1].replace('!','')))
+
+	roles=text.split(',')
+	if roles[0]=='':
+		roles.pop(0)
+	await sort(roles,unsortedMember,message.author,client)
+
+async def sortFromReaction(message,reacterID,client):
+	roles=await trim(message.content)
+	if '/' in roles:
+		roles=roles.split('/')
+	else:
+		roles=roles.split(',')
+	unsortedMember=message.author
+	guild=client.get_guild(DiscordGuildIDs['WindStriders'])
+	olympian=guild.get_member(int(reacterID))
+	await sort(roles,unsortedMember,olympian,client)
+
+async def giveLfgRoles(member,client):
+	reaction=[i for i in (await (await client.fetch_channel(DiscordChannelIDs['WS.ServerRules'])).fetch_message(DiscordMessageIDs['WS.ServerRules1'])).reactions if i.emoji=='🇱'][0]
+	users=await reaction.users().flatten()
+	if member.id not in (i.id for i in users):
+		return
+	for i in [i.id for i in member.roles]:
+		if i in client.wsLfgRoles:
+			await member.add_roles(client.get_guild(DiscordGuildIDs['WindStriders']).get_role(client.wsLfgRoles[i]))
+
+async def removeLfgRoles(member,client):
+	invertedDict={v: k for k, v in client.wsLfgRoles.items()}
+	for i in [i.id for i in member.roles]:
+		if i in invertedDict:
+			await member.remove_roles(client.get_guild(DiscordGuildIDs['WindStriders']).get_role(i))

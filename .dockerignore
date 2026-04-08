@@ -1,3 +1,6 @@
+tests/
+requirements-dev.txt
+pytest.ini
 .git
 .gitignore
 __pycache__/

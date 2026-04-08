@@ -1,6 +1,6 @@
-from printFunctions import *
+from functionsPrint import *
 from urllib.request import urlopen
-from aliases import *
+from heroesAliases import *
 from itertools import repeat
 from json import loads
 import asyncio
@@ -113,11 +113,6 @@ async def descriptionFortmatting(description):
 		description = description.replace('Quest:', '\n    **❢ Quest:**')
 	description = description.replace('Reward:', '\n    **? Reward:**').replace('Gambit:', '\n   **♙Gambit:**').replace('Passive:', '\n    **Passive:**')
 	return description
-
-
-async def fetch(session, url):
-	async with session.get(url) as response:
-		return await response.text()
 
 
 async def downloadHero(hero, client, patch):

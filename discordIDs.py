@@ -5,19 +5,33 @@ DiscordUserIDs={
     'Blackstorm':329447886465138689,
     'medimold':160743140901388288,
     'Gooey':190529178808877056,
-    'Probius':603924594956435491,
+    'Probius_asddsa-token':603924594956435491,
+    'Probius_moldy-token':1394591962081919148,
     'Spazzo':84805890837864448,
     'Derenash':191410663292272640,
     'MBee':364041091693150208,
     'Weebatsu':408114527947980802,
-	'libraries':22497583434629121,
-	'twinkles':410481791204327424,
+    'libraries':22497583434629121,
+    'twinkles':410481791204327424,
+    'Randoms':684944498039455781,
+    'Disciple':738440231568801914,
+    'Chris':204893952908853248,
+    'Elitesparkle':268871972778147870,
     'BlizztrackBot':272526395337342977,
     'AdvisorBot':670832046389854239,
     'TestServer':224975834346291210,
 }
 
-ProbiusPrivilegesIDs=[DiscordUserIDs['Asddsa']]
+ProbiusAuthorIDs=[DiscordUserIDs['Asddsa']]
+
+ProbiusPrivilegeIDs=[DiscordUserIDs['Asddsa'], DiscordUserIDs['MindHawk'], DiscordUserIDs['medimold']]
+
+# Name → user ID map for plain-text @mention forwarding in on_message
+PingForwardIDs={
+    'medimold': DiscordUserIDs['medimold'],
+    'libraries': DiscordUserIDs['libraries'],
+    'twinkles':  DiscordUserIDs['twinkles'],
+}
 
 DiscordRoleIDs={
     'WS.Moldy':892852776877568010,
