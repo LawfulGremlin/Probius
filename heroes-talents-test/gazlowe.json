@@ -25,7 +25,7 @@
       {
         "uid": "c31436",
         "name": "Rock-It! Turret",
-        "description": "Create a turret that deals 36 (+4% per level) damage. Loses Health over 17 seconds.  Turrets prioritize the nearest enemy Hero when first created.",
+        "description": "Create a turret that deals 36 (+4% per level) damage. Loses Health over 20 seconds.  Turrets prioritize the nearest enemy Hero when first created.",
         "hotkey": "Q",
         "abilityId": "Gazlowe|Q1",
         "manaCost": 4,

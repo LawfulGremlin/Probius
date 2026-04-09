@@ -36,7 +36,7 @@
       {
         "uid": "a671f5",
         "name": "Keg Smash",
-        "description": "Deal 50 (+4% per level) damage and soak enemies in Brew for 3 seconds, Slowing them by 10%. After 1.25 seconds, the Slow is increased to 40%.  After being used, this ability becomes Breath of Fire.  Breath of Fire Deal damage and Ignite Brew-soaked enemies.",
+        "description": "Deal 50 (+4% per level) damage and soak enemies in Brew for 3 seconds, Slowing them by 10%. After 1.25 seconds, the Slow is increased to 40%.  After being used, this Ability becomes Breath of Fire.  Breath of Fire Deal damage and Ignite Brew-soaked enemies.",
         "hotkey": "W",
         "abilityId": "Chen|W1",
         "cooldown": 5,
@@ -47,7 +47,7 @@
       {
         "uid": "7a7f80",
         "name": "Stagger",
-        "description": "Damage taken over the next 3 seconds is prevented.  Once this effect ends, Chen receives 75% of the damage taken over 5 seconds.  This damage cannot be modified.",
+        "description": "Damage taken over the next 3 seconds is prevented.  Once this effect ends, Chen receives 75% of the damage taken over 5 seconds. This damage cannot be modified.",
         "hotkey": "E",
         "abilityId": "Chen|E1",
         "cooldown": 18,
@@ -287,7 +287,7 @@
         "tooltipId": "ChenFlyingKickPressurePointTalent",
         "talentTreeId": "ChenPressurePoint",
         "name": "Pressure Point",
-        "description": "Flying Kick Slows the target enemy by 40% for 2 second, or by 80% if Chen has Shields from Fortifying Brew.",
+        "description": "Flying Kick Slows the target enemy by 40% for 1.5 seconds, or by 80% if Chen has Shields from Fortifying Brew.",
         "icon": "storm_ui_icon_chen_flyingkick.png",
         "type": "Q",
         "sort": 1,
