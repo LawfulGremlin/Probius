@@ -278,6 +278,8 @@ async def mainProbius(client,message,texts,blizztrack_service):
 				continue
 			(abilities, talents) = client.heroPages[hero]
 			(test_abilities, test_talents) = client.heroPages_test[hero]
+			log_source_used(False)
+			log_source_used(True)
 			sections = diffHeroPtrChanges(abilities, talents, test_abilities, test_talents, live_v, test_v)
 			if not sections:
 				await message.channel.send(f'No PTR changes for {hero.replace("_", " ")}.')
@@ -322,6 +324,7 @@ async def mainProbius(client,message,texts,blizztrack_service):
 				pass
 			continue
 
+		log_source_used(False)
 		output=''
 		try:
 			tier=text[1]#If there is no identifier, then it throws exception
@@ -351,6 +354,7 @@ async def mainProbius(client,message,texts,blizztrack_service):
 				if test_v and live_v and parseVersion(test_v) > parseVersion(live_v) and hero in client.heroPages_test:
 					try:
 						(_, test_talents) = client.heroPages_test[hero]
+						log_source_used(True)
 						live_block, ptr_block = diffTierWithMoves(talents, test_talents, tier_index)
 						if ptr_block.strip() and ptr_block != live_block:
 							output = (
@@ -378,6 +382,7 @@ async def mainProbius(client,message,texts,blizztrack_service):
 				if test_v and live_v and parseVersion(test_v) > parseVersion(live_v) and hero in client.heroPages_test:
 					try:
 						(test_abilities,test_talents)=client.heroPages_test[hero]
+						log_source_used(True)
 						if hero=='Tracer':
 							test_output=test_abilities[3]
 						else:
@@ -399,6 +404,7 @@ async def mainProbius(client,message,texts,blizztrack_service):
 				if test_v and live_v and parseVersion(test_v) > parseVersion(live_v) and hero in client.heroPages_test:
 					try:
 						(test_abilities,_)=client.heroPages_test[hero]
+						log_source_used(True)
 						test_output=printAbility(test_abilities,tier)
 						if test_output != output:
 							live_diff, ptr_diff = diffAbilityOutput(output, test_output)
@@ -415,6 +421,7 @@ async def mainProbius(client,message,texts,blizztrack_service):
 				if test_v and live_v and parseVersion(test_v) > parseVersion(live_v) and hero in client.heroPages_test:
 					try:
 						(test_abilities, _) = client.heroPages_test[hero]
+						log_source_used(True)
 						test_output = printAbility(test_abilities, 'd')
 						if test_output != output:
 							live_diff, ptr_diff = diffAbilityOutput(output, test_output)
@@ -439,6 +446,7 @@ async def mainProbius(client,message,texts,blizztrack_service):
 					if test_v and live_v and parseVersion(test_v) > parseVersion(live_v):
 						try:
 							(test_abilities, test_talents) = client.heroPages_test[hero]
+							log_source_used(True)
 							test_output = await printSearch(test_abilities, test_talents, tier, hero, True)
 							if test_output != output:
 								live_block, ptr_block = diffSearchOutput(

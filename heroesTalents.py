@@ -14,6 +14,45 @@ from pathlib import Path
 
 nest_asyncio.apply()
 
+_current_source: dict = {False: None, True: None}
+
+def _get_source_label(is_test: bool) -> str:
+	folder = '/heroes-talents-test' if is_test else '/heroes-talents'
+	if Path(folder).is_dir():
+		return f"volume ({folder})"
+	bundled = 'heroes-talents-test' if is_test else 'heroes-talents'
+	return f"bundled ({bundled})"
+
+def _read_version_direct(is_test: bool) -> str:
+	filename = '.hversion-test' if is_test else '.hversion'
+	volume_folder = '/heroes-talents-test' if is_test else '/heroes-talents'
+	bundled_folder = 'heroes-talents-test' if is_test else 'heroes-talents'
+	folder = volume_folder if Path(volume_folder).is_dir() else bundled_folder
+	try:
+		return (Path(folder) / filename).read_text(encoding='utf-8').strip()
+	except Exception:
+		return ''
+
+def _log_source_if_changed(is_test: bool) -> None:
+	label = _get_source_label(is_test)
+	name = 'heroes-talents-test' if is_test else 'heroes-talents'
+	if label != _current_source[is_test]:
+		version = _read_version_direct(is_test)
+		version_str = f' [{version}]' if version else ''
+		if _current_source[is_test] is None:
+			print(f"[{name}] source: {label}{version_str}")
+		else:
+			print(f"[{name}] source changed to: {label}{version_str}")
+		_current_source[is_test] = label
+
+def log_source_used(is_test: bool = False) -> None:
+	label = _current_source.get(is_test)
+	if label:
+		name = 'heroes-talents-test' if is_test else 'heroes-talents'
+		version = _read_version_direct(is_test)
+		version_str = f' [{version}]' if version else ''
+		print(f"[{name}] {label}{version_str}")
+
 
 def trimForHeroesTalents(hero):
 	hero = hero.replace('The', '').lower()
@@ -115,7 +154,7 @@ async def descriptionFortmatting(description):
 	return description
 
 
-async def downloadHero(hero, client, patch):
+async def loadHero(hero, client, patch):
 	with _open_heroes_data_file(hero, is_test=False) as page:
 		page = loads(page.read())
 		abilities = []
@@ -171,12 +210,12 @@ async def downloadHero(hero, client, patch):
 		client.heroPages[aliases(hero)] = (abilities, talents)
 
 
-async def loopFunction(client, heroes, patch):
-	for future in asyncio.as_completed(map(downloadHero, heroes, repeat(client), repeat(patch))):
+async def loopLoad(client, heroes, patch):
+	for future in asyncio.as_completed(map(loadHero, heroes, repeat(client), repeat(patch))):
 		await future
 
 
-async def downloadAll(client, argv):
+async def loadAll(client, argv):
 	if len(argv) == 2:
 		patch = argv[1]
 	else:
@@ -184,7 +223,7 @@ async def downloadAll(client, argv):
 	heroes = getHeroes()
 	heroes = list(map(trimForHeroesTalents, heroes))
 	loop = asyncio.get_event_loop()  # running instead of event when calling from a coroutine.
-	loop.run_until_complete(loopFunction(client, heroes, patch))
+	loop.run_until_complete(loopLoad(client, heroes, patch))
 
 
 # -------------------------
@@ -308,6 +347,7 @@ async def heroStats(hero, channel, allowRecursion=True):
 			await channel.send(f'``{hero}:`` Stat fetch failed: {type(e).__name__}: {e}')
 
 def _open_heroes_data_file(hero, is_test=False):
+	_log_source_if_changed(is_test)
 	volume_folder = '/heroes-talents-test' if is_test else '/heroes-talents'
 	bundled_folder = 'heroes-talents-test' if is_test else 'heroes-talents'
 	filename = f'{hero}.json'
@@ -326,6 +366,7 @@ def _open_heroes_data_file(hero, is_test=False):
 
 
 def _resolve_data_path(filename, is_test=False):
+	_log_source_if_changed(is_test)
 	volume_folder = '/heroes-talents-test' if is_test else '/heroes-talents'
 	bundled_folder = 'heroes-talents-test' if is_test else 'heroes-talents'
 
@@ -362,7 +403,7 @@ def parseVersion(v):
 		return (0,)
 
 
-async def downloadHeroTest(hero, client, patch):
+async def loadHeroTest(hero, client, patch):
 	try:
 		with _open_heroes_data_file(hero, is_test=True) as page:
 			page = loads(page.read())
@@ -421,13 +462,13 @@ async def downloadHeroTest(hero, client, patch):
 		pass
 
 
-async def loopFunctionTest(client, heroes, patch):
-	for future in asyncio.as_completed(map(downloadHeroTest, heroes, repeat(client), repeat(patch))):
+async def loopLoadTest(client, heroes, patch):
+	for future in asyncio.as_completed(map(loadHeroTest, heroes, repeat(client), repeat(patch))):
 		await future
 
 
-async def downloadAllTest(client, argv):
+async def loadAllTest(client, argv):
 	patch = argv[1] if len(argv) == 2 else ''
 	heroes = list(map(trimForHeroesTalents, getHeroes()))
 	loop = asyncio.get_event_loop()
-	loop.run_until_complete(loopFunctionTest(client, heroes, patch))
+	loop.run_until_complete(loopLoadTest(client, heroes, patch))

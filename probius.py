@@ -51,8 +51,11 @@ class MyClient(discord.Client):
 		# create the background task and run it in the background
 		self.bgTask0 = self.loop.create_task(self.bgTaskSubredditForwarding())
 		self.bgTask1 = self.loop.create_task(self.bgTaskBlizztrackVersionCheck())
+		self.bgTask2 = self.loop.create_task(self.bgTaskHeroesTalentsVersionCheck())
 
 		self.heroPages={}
+		self.heroesVersion = ''
+		self.heroesVersionTest = ''
 		self.heroPages_test={}
 		self.lastWelcomeImage=[]
 		self.waitList=[]
@@ -108,9 +111,11 @@ class MyClient(discord.Client):
 		self.activeSuppressIDs=[uid for uid in SUPPRESS_USER_IDS if uid != self.user.id]
 		print('Logged on...')
 		self.loop.create_task(self.suppression_status_loop())
-		print('Downloading heroes...')
-		await downloadAll(self,argv)
-		await downloadAllTest(self,argv)
+		print('Loading heroes...')
+		await loadAll(self,argv)
+		await loadAllTest(self,argv)
+		self.heroesVersion = readVersion('.hversion')
+		self.heroesVersionTest = readVersion('.hversion-test')
 #		print('Fetching proxy emojis...')
 #		guild = client.get_guild(603924426769170433)
 #		if guild is None:
@@ -289,6 +294,27 @@ class MyClient(discord.Client):
 			except Exception as e:
 				print(f"ERROR in bgTaskBlizztrackVersionCheck: {e}")
 			await asyncio.sleep(300)
+
+	async def bgTaskHeroesTalentsVersionCheck(self):
+		await self.wait_until_ready()
+		while not self.is_closed():
+			if not self.ready:
+				await asyncio.sleep(5)
+				continue
+			try:
+				current_v = readVersion('.hversion')
+				if current_v and current_v != self.heroesVersion:
+					print(f"[heroes-talents] version changed: {self.heroesVersion} -> {current_v}, reloading...")
+					await loadAll(self, argv)
+					self.heroesVersion = current_v
+				current_vt = readVersion('.hversion-test')
+				if current_vt and current_vt != self.heroesVersionTest:
+					print(f"[heroes-talents-test] version changed: {self.heroesVersionTest} -> {current_vt}, reloading...")
+					await loadAllTest(self, argv)
+					self.heroesVersionTest = current_vt
+			except Exception as e:
+				print(f"ERROR in bgTaskHeroesTalentsVersionCheck: {e}")
+			await asyncio.sleep(60)
 
 	async def check_blizztrack_versions(self,announce_if_first_run=False):
 		current_versions=await blizztrack_service.get_versions()
