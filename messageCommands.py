@@ -43,6 +43,7 @@ heroAliases=['hero', 'heroes', 'bruiser', 'healer', 'support', 'ranged', 'melee'
 coachingAliases=['coach', 'coaching', 'coachingsession']
 randomBuildAliases=['randombuild','rb','randb','randbuild','randomb']
 versionAliases=['version']
+ptrAliases=['ptr']
 
 drafts={}#Outside of client so it doesn't reset on periodic restarts or [restart]
 lastDraftMessageDict={}
@@ -264,6 +265,25 @@ async def mainProbius(client,message,texts,blizztrack_service):
 			continue
 		if command in emojiAliases:
 			await message.channel.send('Emojis: [:hero/emotion], where emotion is of the following: happy, lol, sad, silly, meh, angry, cool, oops, love, or wow.')
+			continue
+		if command in ptrAliases and len(text) == 2:
+			hero = aliases(text[1])
+			live_v = readVersion('.hversion')
+			test_v = readVersion('.hversion-test')
+			if not (test_v and live_v and parseVersion(test_v) > parseVersion(live_v)):
+				await message.channel.send('No PTR data available.')
+				continue
+			if hero not in client.heroPages or hero not in client.heroPages_test:
+				await message.channel.send(f'No data found for {text[1]}.')
+				continue
+			(abilities, talents) = client.heroPages[hero]
+			(test_abilities, test_talents) = client.heroPages_test[hero]
+			sections = diffHeroPtrChanges(abilities, talents, test_abilities, test_talents, live_v, test_v)
+			if not sections:
+				await message.channel.send(f'No PTR changes for {hero.replace("_", " ")}.')
+				continue
+			header = f'**PTR Changes: {hero.replace("_", " ")} [{live_v} → {test_v}]**\n\n'
+			await printLarge(message.channel, header + '\n\n'.join(sections))
 			continue
 		try:
 			if len(text)==1 and command[0]=='t' and command[8] ==',':#[t3221323,sam]

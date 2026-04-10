@@ -19,6 +19,8 @@ def parse_talent_line(line: str):
 def fix_italic_underline(text: str) -> str:
 	return re.sub(r'__\*(\d+(?:\.\d+)?)__', r'*__\1__', text)
 
+_TRAILING_PUNCT = frozenset(".,;:'")
+
 def diffUnderline(live_str, ptr_str):
 	live_words = live_str.split(' ')
 	ptr_words = ptr_str.split(' ')
@@ -34,28 +36,62 @@ def diffUnderline(live_str, ptr_str):
 			live_out.extend(live_chunk)
 			ptr_out.extend(ptr_chunk)
 		elif tag == 'replace':
-			if live_nonempty:
-				live_out.append('__' + ' '.join(live_nonempty) + '__')
+			if live_nonempty and ptr_nonempty:
+				# Find common character prefix between the first words
+				common_len = 0
+				for a, b in zip(live_nonempty[0], ptr_nonempty[0]):
+					if a == b:
+						common_len += 1
+					else:
+						break
+				live_base_len = len(live_nonempty[0].rstrip(''.join(_TRAILING_PUNCT)))
+				ptr_base_len = len(ptr_nonempty[0].rstrip(''.join(_TRAILING_PUNCT)))
+				# Only extract the common prefix if it exactly equals the base of either word,
+				# so partial matches within a word body (e.g. "slow" in "silence") are kept whole
+				if common_len > 0 and (common_len == live_base_len or common_len == ptr_base_len):
+					common = live_nonempty[0][:common_len]
+					live_suffix = live_nonempty[0][common_len:]
+					ptr_suffix = ptr_nonempty[0][common_len:]
+					live_parts = ([live_suffix] if live_suffix else []) + list(live_nonempty[1:])
+					ptr_parts = ([ptr_suffix] if ptr_suffix else []) + list(ptr_nonempty[1:])
+					# Suffix directly attached to word → concatenate; remaining words → separate
+					# element so ' '.join() inserts the word boundary space
+					if live_suffix:
+						live_out.append(common + '__' + ' '.join(live_parts) + '__')
+					elif live_parts:
+						live_out.append(common)
+						live_out.append('__' + ' '.join(live_parts) + '__')
+					else:
+						live_out.append(common)
+					if ptr_suffix:
+						ptr_out.append(common + '__' + ' '.join(ptr_parts) + '__')
+					elif ptr_parts:
+						ptr_out.append(common)
+						ptr_out.append('__' + ' '.join(ptr_parts) + '__')
+					else:
+						ptr_out.append(common)
+				else:
+					live_out.append('__' + ' '.join(live_nonempty) + '__')
+					ptr_out.append('__' + ' '.join(ptr_nonempty) + '__')
 			else:
-				live_out.extend(live_chunk)
-			if ptr_nonempty:
-				ptr_out.append('__' + ' '.join(ptr_nonempty) + '__')
-			else:
-				ptr_out.extend(ptr_chunk)
+				if live_nonempty:
+					live_out.append('__' + ' '.join(live_nonempty) + '__')
+				else:
+					live_out.extend(live_chunk)
+				if ptr_nonempty:
+					ptr_out.append('__' + ' '.join(ptr_nonempty) + '__')
+				else:
+					ptr_out.extend(ptr_chunk)
 		elif tag == 'delete':
-			# underline deleted words only on live side
 			if live_nonempty:
 				live_out.append('__' + ' '.join(live_nonempty) + '__')
 			else:
 				live_out.extend(live_chunk)
-			# ptr side: nothing
 		elif tag == 'insert':
-			# underline inserted words only on PTR side
 			if ptr_nonempty:
 				ptr_out.append('__' + ' '.join(ptr_nonempty) + '__')
 			else:
 				ptr_out.extend(ptr_chunk)
-			# live side: nothing
 	return ' '.join(live_out), ' '.join(ptr_out)
 
 def diffAbilityOutput(live_output: str, test_output: str):
@@ -286,6 +322,22 @@ def diffTierOutput(live_output, test_output):
 	ptr_block  = '\n'.join(ln for ln in ptr_result  if ln.strip())
 
 	return live_block, ptr_block
+
+def diffHeroPtrChanges(abilities, talents, test_abilities, test_talents, live_v, test_v):
+	"""Returns a list of formatted diff blocks for sections that differ between live and PTR."""
+	sections = []
+
+	for live_ab, ptr_ab in zip(abilities, test_abilities):
+		if live_ab != ptr_ab:
+			live_diff, ptr_diff = diffAbilityOutput(live_ab, ptr_ab)
+			sections.append(f"**Live [{live_v}]**\n{live_diff}\n**PTR [{test_v}]**\n{ptr_diff}")
+
+	for tier_index in range(min(len(talents), len(test_talents))):
+		if talents[tier_index] != test_talents[tier_index]:
+			live_block, ptr_block = diffTierWithMoves(talents, test_talents, tier_index)
+			sections.append(f"**Live [{live_v}]**\n{live_block}\n\n**PTR [{test_v}]**\n{ptr_block}")
+
+	return sections
 
 def diffSearchOutput(live_output: str,
 					 test_output: str,

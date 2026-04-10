@@ -14,14 +14,10 @@ discordnames={'Pscythic':'Soren Lily', 'SotheBee':'Sothe', 'slapperoni':'slap','
 
 #Posts with these in title gets forwarded regardless of author
 keywords={
-'Genji':[DiscordUserIDs['Weebatsu']],
 'Samuro':[DiscordUserIDs['Blackstorm']],
-'Zera':[DiscordUserIDs['Derenash']],
-'Valeera':[DiscordUserIDs['Randoms'], DiscordUserIDs['Disciple']],
-'Orphea':[DiscordUserIDs['twinkles'], DiscordUserIDs['Disciple']],
+'Valeera':[],
+'Orphea':[DiscordUserIDs['twinkles']],
 'Deathwing':[DiscordUserIDs['Chris']],
-'Time stop':[DiscordUserIDs['Elitesparkle']],
-'Li-Ming':[DiscordUserIDs['Disciple']]
 }
 
 
