@@ -1,18 +1,11 @@
 from functionsPrint import *
-from urllib.request import urlopen
 from heroesAliases import *
-from itertools import repeat
 from json import loads
-import asyncio
-import aiohttp
-import nest_asyncio
+import logging
 import re
-import html as htmlmod
-from bs4 import BeautifulSoup
 import os
 from pathlib import Path
-
-nest_asyncio.apply()
+from datetime import datetime
 
 _current_source: dict = {False: None, True: None}
 
@@ -40,9 +33,9 @@ def _log_source_if_changed(is_test: bool) -> None:
 		version = _read_version_direct(is_test)
 		version_str = f' [{version}]' if version else ''
 		if _current_source[is_test] is None:
-			print(f"[{name}] source: {label}{version_str}")
+			logging.info("[%s] source: %s%s", name, label, version_str)
 		else:
-			print(f"[{name}] source changed to: {label}{version_str}")
+			logging.info("[%s] source changed to: %s%s", name, label, version_str)
 		_current_source[is_test] = label
 
 def log_source_used(is_test: bool = False) -> None:
@@ -51,7 +44,7 @@ def log_source_used(is_test: bool = False) -> None:
 		name = 'heroes-talents-test' if is_test else 'heroes-talents'
 		version = _read_version_direct(is_test)
 		version_str = f' [{version}]' if version else ''
-		print(f"[{name}] {label}{version_str}")
+		logging.info("[%s] %s%s", name, label, version_str)
 
 
 def trimForHeroesTalents(hero):
@@ -154,8 +147,17 @@ async def descriptionFortmatting(description):
 	return description
 
 
-async def loadHero(hero, client, patch):
-	with _open_heroes_data_file(hero, is_test=False) as page:
+def hero_file_exists(hero, is_test=False):
+	hero = trimForHeroesTalents(hero)
+	volume_folder = '/heroes-talents-test' if is_test else '/heroes-talents'
+	bundled_folder = 'heroes-talents-test' if is_test else 'heroes-talents'
+	filename = f'{hero}.json'
+	return (Path(volume_folder) / filename).exists() or (Path(bundled_folder) / filename).exists()
+
+
+async def get_hero_data(hero, is_test=False):
+	hero = trimForHeroesTalents(hero)
+	with _open_heroes_data_file(hero, is_test=is_test) as page:
 		page = loads(page.read())
 		abilities = []
 		if hero in ['ltmorales', 'valeera', 'deathwing', 'zarya']:
@@ -191,7 +193,7 @@ async def loadHero(hero, client, patch):
 		if hero == 'samuro':
 			abilities.append("**[D] Image Transmission:** *14 seconds;* Activate to switch places with a target Mirror Image, removing most negative effects from Samuro and the Mirror Image.\n**Advancing Strikes:** Basic Attacks against enemy Heroes increase Samuro's Movement Speed by 25% for 2 seconds.")
 		elif hero == 'hogger':
-			abilities.append("**[D] Rage:** Rage is gained by taking damage or dealing Basic Attack damage. Hogger’s Basic Ability cooldowns refresh 1% faster for every 2 points of Rage. After 3 seconds of not gaining Rage, it begins to quickly decay. ***Hogger gains 5 Rage when landing a Basic Attack and 1 Rage each time he takes damage.***")
+			abilities.append("**[D] Rage:** Rage is gained by taking damage or dealing Basic Attack damage. Hogger's Basic Ability cooldowns refresh 1% faster for every 2 points of Rage. After 3 seconds of not gaining Rage, it begins to quickly decay. ***Hogger gains 5 Rage when landing a Basic Attack and 1 Rage each time he takes damage.***")
 
 		talents = []
 		keys = sorted(list(page['talents'].keys()), key=lambda x: int(x))
@@ -207,79 +209,72 @@ async def loadHero(hero, client, patch):
 				output = await fixTooltips(hero, talent['name'], output)
 				talentTier.append(output)
 			talents.append(talentTier)
-		client.heroPages[aliases(hero)] = (abilities, talents)
-
-
-async def loopLoad(client, heroes, patch):
-	for future in asyncio.as_completed(map(loadHero, heroes, repeat(client), repeat(patch))):
-		await future
-
-
-async def loadAll(client, argv):
-	if len(argv) == 2:
-		patch = argv[1]
-	else:
-		patch = ''
-	heroes = getHeroes()
-	heroes = list(map(trimForHeroesTalents, heroes))
-	loop = asyncio.get_event_loop()  # running instead of event when calling from a coroutine.
-	loop.run_until_complete(loopLoad(client, heroes, patch))
+		return (abilities, talents)
 
 
 # -------------------------
-# Fandom stats (updated)
+# Hero stats (from game data)
 # -------------------------
 
-def _norm_key(s: str) -> str:
-	return " ".join(s.replace("\xa0", " ").strip().lower().split())
+def _fmt_stat(value) -> str:
+	f = float(value)
+	return str(int(f)) if f == int(f) else f'{f:g}'
 
 
-async def _fetch_fandom_data_vars(session: aiohttp.ClientSession, hero: str) -> dict:
-	"""
-	Returns dict like {"health": "2450", "attack speed": "1.25", ...}
-	by calling the MediaWiki API parse endpoint for Data:<hero>.
-	This avoids Fandom UI endpoints that commonly return 403.
-	"""
-	api_url = "https://heroesofthestorm.fandom.com/api.php"
-	params = {
-		"action": "parse",
-		"page": f"Data:{hero}",
-		"prop": "text",
-		"format": "json",
-		"formatversion": "2",
-		"redirects": "1",
-	}
-
-	async with session.get(api_url, params=params) as resp:
-		resp.raise_for_status()
-		data = await resp.json(content_type=None)
-
-	html_text = data.get("parse", {}).get("text", "")
-	if not html_text:
+def _build_vars_map_from_local(hero: str) -> dict:
+	try:
+		with _open_heroes_data_file(hero.lower()) as f:
+			hero_data = loads(f.read())
+	except Exception:
 		return {}
 
-	soup = BeautifulSoup(html_text, "html.parser")
-
-	# Data pages usually have a wikitable with 3 columns: Parameter | Variable | Value
-	table = soup.select_one("table.wikitable") or soup.find("table")
-	if not table:
+	stats = hero_data.get('stats', {})
+	if not stats:
 		return {}
 
-	out = {}
-	for tr in table.find_all("tr"):
-		cells = tr.find_all(["td", "th"])
-		if len(cells) < 3:
-			continue
+	result = {}
 
-		var = _norm_key(cells[1].get_text(" ", strip=True))
-		val = cells[2].get_text(" ", strip=True)
-		val = htmlmod.unescape(val).replace("\xa0", " ").strip()
+	release_date = hero_data.get('releaseDate', '')
+	if release_date:
+		try:
+			dt = datetime.strptime(release_date, '%Y-%m-%d')
+			result['date'] = dt.strftime('%B %-d, %Y')
+		except ValueError:
+			pass
 
-		# Skip header row if present
-		if var and var != "variable":
-			out[var] = val
+	for src_key, dst_key in [
+		('hp',           'health'),
+		('resource',     'resource'),
+		('resourceType', 'resource type'),
+		('attackSpeed',  'attack speed'),
+		('attackRange',  'attack range'),
+		('attackDamage', 'attack damage'),
+		('radius',       'unit radius'),
+	]:
+		if src_key in stats:
+			val = stats[src_key]
+			result[dst_key] = val if isinstance(val, str) else _fmt_stat(val)
 
-	return out
+	return result
+
+
+def hero_stat_line(hero: str) -> str | None:
+	vars_map = _build_vars_map_from_local(hero)
+	if not vars_map:
+		return None
+	if 'resource' in vars_map and 'resource type' in vars_map:
+		vars_map['resource'] = f"{vars_map['resource']} {vars_map['resource type']}"
+	fields = [
+		('date',          'Released'),
+		('health',        'Hit points'),
+		('resource',      'Resource'),
+		('attack speed',  'Attack speed'),
+		('attack range',  'Attack range'),
+		('attack damage', 'Attack damage'),
+		('unit radius',   'Radius'),
+	]
+	parts = [f'**{label}**: {vars_map[key]}' for key, label in fields if key in vars_map]
+	return (f'**[{hero}]:** ' + ', '.join(parts)) if parts else None
 
 
 async def heroStats(hero, channel, allowRecursion=True):
@@ -295,56 +290,8 @@ async def heroStats(hero, channel, allowRecursion=True):
 		elif hero == 'Gall':
 			await heroStats('Cho', channel)
 			return
-
-		usefulStats = [
-			'date',
-			'health',
-			'resource',
-			'resource type',
-			'attack speed',
-			'attack range',
-			'attack damage',
-			'unit radius'
-		]
-
-		headers = {
-			# Fandom tends to prefer "real" UA strings.
-			"User-Agent": "HotS-Stats-Bot/1.0 (+discord; aiohttp)",
-			"Accept": "application/json,text/html;q=0.9,*/*;q=0.8",
-			"Accept-Language": "en-US,en;q=0.9",
-		}
-
-		timeout = aiohttp.ClientTimeout(total=20)
-
-		try:
-			async with aiohttp.ClientSession(headers=headers, timeout=timeout) as session:
-				vars_map = await _fetch_fandom_data_vars(session, hero)
-
-			if not vars_map:
-				await channel.send(f'``{hero}:`` Could not find stat data.')
-				return
-
-			# Make resource nicer if type is present
-			if 'resource' in vars_map and 'resource type' in vars_map:
-				vars_map['resource'] = f"{vars_map['resource']} {vars_map['resource type']}".strip()
-
-			output = []
-			for k in usefulStats:
-				if k not in vars_map:
-					continue
-				label = (k.replace('attack', 'aa')
-						   .replace('unit ', '')
-						   .replace('health', 'hp')
-						   .capitalize())
-				output.append('**' + label + '**: ' + vars_map[k])
-
-			if output:
-				await channel.send('``' + hero + ':`` ' + ', '.join(output))
-			else:
-				await channel.send(f'``{hero}:`` Could not find stat data.')
-
-		except Exception as e:
-			await channel.send(f'``{hero}:`` Stat fetch failed: {type(e).__name__}: {e}')
+		line = hero_stat_line(hero)
+		await channel.send(line or f'``{hero}:`` Could not find stat data.')
 
 def _open_heroes_data_file(hero, is_test=False):
 	_log_source_if_changed(is_test)
@@ -360,6 +307,8 @@ def _open_heroes_data_file(hero, is_test=False):
 	# Fall back to bundled folder
 	bundled_path = Path(bundled_folder) / filename
 	if bundled_path.exists():
+		if Path(volume_folder).is_dir():
+			logging.warning("[%s] %s missing from volume, falling back to bundled", volume_folder, filename)
 		return open(bundled_path, 'r')
 
 	raise FileNotFoundError(f'{filename} not found in {volume_folder} or {bundled_folder}')
@@ -403,72 +352,3 @@ def parseVersion(v):
 		return (0,)
 
 
-async def loadHeroTest(hero, client, patch):
-	try:
-		with _open_heroes_data_file(hero, is_test=True) as page:
-			page = loads(page.read())
-			abilities = []
-			if hero in ['ltmorales', 'valeera', 'deathwing', 'zarya']:
-				resource = 'energy'
-			elif hero == 'chen':
-				resource = 'brew'
-			elif hero == 'sonya':
-				resource = 'fury'
-			elif hero == 'gazlowe':
-				resource = 'scrap'
-			else:
-				resource = 'mana'
-
-			for i in page['abilities'].keys():
-				for ability in page['abilities'][i]:
-					if 'hotkey' in ability:
-						output = '**[' + ability['hotkey'] + '] '
-					else:
-						output = '**[D] '
-					output += ability['name'] + ':** '
-					if 'cooldown' in ability or 'manaCost' in ability:
-						output += '*'
-						if 'cooldown' in ability:
-							output += str(ability['cooldown']) + ' seconds'
-							if 'manaCost' in ability:
-								output += ', '
-						if 'manaCost' in ability:
-							output += str(ability['manaCost']) + ' ' + resource
-						output += ';* '
-					output += await descriptionFortmatting(ability['description'])
-					output = await fixTooltips(hero, ability['name'], output)
-					abilities.append(output)
-			if hero == 'samuro':
-				abilities.append("**[D] Image Transmission:** *14 seconds;* Activate to switch places with a target Mirror Image, removing most negative effects from Samuro and the Mirror Image.\n**Advancing Strikes:** Basic Attacks against enemy Heroes increase Samuro's Movement Speed by 25% for 2 seconds.")
-			elif hero == 'hogger':
-				abilities.append("**[D] Rage:** Rage is gained by taking damage or dealing Basic Attack damage. Hogger's Basic Ability cooldowns refresh 1% faster for every 2 points of Rage. After 3 seconds of not gaining Rage, it begins to quickly decay. ***Hogger gains 5 Rage when landing a Basic Attack and 1 Rage each time he takes damage.***")
-
-			talents = []
-			keys = sorted(list(page['talents'].keys()), key=lambda x: int(x))
-			for key in keys:
-				tier = page['talents'][key]
-				talentTier = []
-				for talent in tier:
-					output = '**[' + str(int(key) - 2 * int(hero == 'chromie' and key != '1')) + '] '
-					output += talent['name'] + ':** '
-					if 'cooldown' in talent:
-						output += '*' + str(talent['cooldown']) + ' seconds;* '
-					output += await descriptionFortmatting(talent['description'])
-					output = await fixTooltips(hero, talent['name'], output)
-					talentTier.append(output)
-				talents.append(talentTier)
-			client.heroPages_test[aliases(hero)] = (abilities, talents)
-	except FileNotFoundError:
-		pass
-
-
-async def loopLoadTest(client, heroes, patch):
-	for future in asyncio.as_completed(map(loadHeroTest, heroes, repeat(client), repeat(patch))):
-		await future
-
-
-async def loadAllTest(client, argv):
-	patch = argv[1] if len(argv) == 2 else ''
-	heroes = list(map(trimForHeroesTalents, getHeroes()))
-	loop = asyncio.get_event_loop()
-	loop.run_until_complete(loopLoadTest(client, heroes, patch))

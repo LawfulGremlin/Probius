@@ -19,6 +19,15 @@
     "RoleCaster",
     "WaveClearer"
   ],
+  "stats": {
+    "hp": 1340,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 70,
+    "attackRange": 5.5,
+    "attackSpeed": 1.6667,
+    "radius": 0.625
+  },
   "abilities": {
     "Valla": [
       {

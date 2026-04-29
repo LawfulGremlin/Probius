@@ -21,6 +21,15 @@
     "SoloLaner",
     "WaveClearer"
   ],
+  "stats": {
+    "hp": 2385,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 95,
+    "attackRange": 1,
+    "attackSpeed": 1.25,
+    "radius": 1
+  },
   "abilities": {
     "Dehaka": [
       {

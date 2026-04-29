@@ -19,6 +19,15 @@
     "RoleSpecialist",
     "WaveClearer"
   ],
+  "stats": {
+    "hp": 1470,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 80,
+    "attackRange": 5.5,
+    "attackSpeed": 1.1111,
+    "radius": 0.75
+  },
   "abilities": {
     "Medivh": [
       {

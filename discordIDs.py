@@ -18,6 +18,7 @@ DiscordUserIDs={
     'Chris':204893952908853248,
     'Elitesparkle':268871972778147870,
     'BlizztrackBot':272526395337342977,
+    'Dyno':772549460064206868,
     'AdvisorBot':670832046389854239,
     'TestServer':224975834346291210,
 }

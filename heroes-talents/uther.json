@@ -20,6 +20,15 @@
     "RoleSupport",
     "SelfHealer"
   ],
+  "stats": {
+    "hp": 1975,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 75,
+    "attackRange": 1,
+    "attackSpeed": 1,
+    "radius": 0.75
+  },
   "abilities": {
     "Uther": [
       {

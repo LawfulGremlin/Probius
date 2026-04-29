@@ -21,6 +21,15 @@
     "SoloLaner",
     "WaveClearer"
   ],
+  "stats": {
+    "hp": 2450,
+    "resource": 100,
+    "resourceType": "Fury",
+    "attackDamage": 84,
+    "attackRange": 1.5,
+    "attackSpeed": 1.25,
+    "radius": 0.75
+  },
   "abilities": {
     "Sonya": [
       {

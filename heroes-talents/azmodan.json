@@ -19,6 +19,15 @@
     "TowerPusher",
     "WaveClearer"
   ],
+  "stats": {
+    "hp": 2464.2,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 85,
+    "attackRange": 5.5,
+    "attackSpeed": 1,
+    "radius": 1.1875
+  },
   "abilities": {
     "Azmodan": [
       {

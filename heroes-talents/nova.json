@@ -18,6 +18,15 @@
     "Helper",
     "RoleCaster"
   ],
+  "stats": {
+    "hp": 1300,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 105,
+    "attackRange": 6.5,
+    "attackSpeed": 1,
+    "radius": 0.625
+  },
   "abilities": {
     "Nova": [
       {

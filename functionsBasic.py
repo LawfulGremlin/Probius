@@ -7,7 +7,7 @@ import time
 import datetime
 import asyncio
 import aiohttp
-import scipy.stats
+from math import sqrt
 
 def helpMessage():
 	output="""[Hero] to see that hero's abilities
@@ -83,14 +83,12 @@ async def confidence(channel,text):
 		wr,n=text[1].replace(' ','').split(',')
 		wr=float(wr)
 		n=int(n)
-		if n<=1000000: # Shouldn't let n be too large or the exact computation could be expensive
-			interval=scipy.stats.binomtest(round(wr/100*n),n).proportion_ci()
-			lower=round(interval.low*100,1)
-			upper=round(interval.high*100,1)
-		else:
-			a=1.96*(wr*(100-wr)/n)**0.5
-			lower=str(wr-a)[:4]
-			upper=str(wr+a)[:4]
+		z=1.96
+		p=wr/100
+		center=(p+z*z/(2*n))/(1+z*z/n)
+		hw=z*sqrt(p*(1-p)/n+z*z/(4*n*n))/(1+z*z/n)
+		lower=round((center-hw)*100,1)
+		upper=round((center+hw)*100,1)
 		await channel.send('We are 95% confident that the winrate is between '+str(lower)+'% and '+str(upper)+'%.')
 	except:
 		await channel.send('Input success rate as a percentage from 0 to 100, then sample size (at least 1)')
@@ -129,7 +127,7 @@ async def randomBuild(client, channel, hero):
 		except:
 			pass
 
-	(abilities,talents)=client.heroPages[hero]
+	(abilities,talents)=await get_hero_data(hero)
 	text='T'
 	for tier in talents[:-1]:
 		text+=str(randint(1,len(tier)))

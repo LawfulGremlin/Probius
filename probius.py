@@ -1,13 +1,14 @@
 #A HotS Discord bot
 #Call in Discord with [hero/modifier]
 #Modifier is hotkey or talent tier
-#Data is pulled from HotS wiki
+#Hero data is extracted from game files via probius-extractor
 #Project started on 14/9-2019
 
 import asyncio
 import discord
 from sys import argv
 import logging
+import os
 
 from functionsBasic import *		#Edge cases and help message
 from heroesTalents import *		#The function that imports the hero pages
@@ -20,6 +21,10 @@ from messageReactions import handle_author_reactions, handle_baelog, is_advisor_
 from discordToken import getDiscordToken
 
 logging.basicConfig(level=logging.INFO)
+logging.getLogger('discord').setLevel(logging.WARNING)
+
+BLIZZTRACK_CHECK_ENABLED = os.getenv('BLIZZTRACK_CHECK_ENABLED', 'true').lower() == 'true'
+EXTRACTOR_CHECK_ENABLED = os.getenv('EXTRACTOR_CHECK_ENABLED', 'false').lower() == 'true'
 
 botChannels={'Wind Striders':DiscordChannelIDs['WS.Probius']}
 
@@ -41,6 +46,48 @@ def read_probius_version() -> str:
 	except Exception as e:
 		return f"unknown (error reading .hversion: {e})"
 
+def _resolve_mentions(message):
+	content = message.content
+	for user in message.mentions:
+		content = content.replace(f'<@!{user.id}>', f'@{user.display_name} ({user.id})')
+		content = content.replace(f'<@{user.id}>', f'@{user.display_name} ({user.id})')
+	for channel in message.channel_mentions:
+		content = content.replace(f'<#{channel.id}>', f'#{channel.name}')
+	for role in message.role_mentions:
+		content = content.replace(f'<@&{role.id}>', f'@{role.name}')
+	return content
+
+def _log_message_content(message):
+	content = _resolve_mentions(message)
+	if not content and message.embeds:
+		parts = []
+		for embed in message.embeds:
+			embed_parts = []
+			if embed.author and embed.author.name:
+				embed_parts.append(f"[{embed.author.name}]")
+			if embed.title:
+				embed_parts.append(embed.title)
+			if embed.description:
+				embed_parts.append(embed.description)
+			for field in embed.fields:
+				embed_parts.append(f"{field.name}: {field.value}")
+			if embed_parts:
+				parts.append(' | '.join(embed_parts))
+		if parts:
+			content = '[embeds] ' + ' || '.join(parts)
+	return content
+
+def _accessible_channels(guild):
+	me = guild.me
+	return [ch for ch in guild.text_channels if ch.permissions_for(me).read_messages and ch.permissions_for(me).send_messages]
+
+def _guild_channel_summary(guild):
+	channels = _accessible_channels(guild)
+	roles = [r for r in guild.roles if r.name != '@everyone']
+	header = f"{guild.name} ({guild.id}): {guild.member_count} members, {len(roles)} roles"
+	channel_block = f"  {len(channels)} accessible text channels: " + ' '.join(f"#{ch.name}" for ch in channels)
+	return f"{header}\n{channel_block}" if channels else header
+
 class MyClient(discord.Client):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -50,13 +97,10 @@ class MyClient(discord.Client):
 		self.proxyEmojis={}
 		# create the background task and run it in the background
 		self.bgTask0 = self.loop.create_task(self.bgTaskSubredditForwarding())
-		self.bgTask1 = self.loop.create_task(self.bgTaskBlizztrackVersionCheck())
-		self.bgTask2 = self.loop.create_task(self.bgTaskHeroesTalentsVersionCheck())
-
-		self.heroPages={}
-		self.heroesVersion = ''
-		self.heroesVersionTest = ''
-		self.heroPages_test={}
+		if BLIZZTRACK_CHECK_ENABLED:
+			self.bgTask1 = self.loop.create_task(self.bgTaskBlizztrackVersionCheck())
+		if EXTRACTOR_CHECK_ENABLED:
+			self.bgTask2 = self.loop.create_task(self.bgTaskExtractorVersionCheck())
 		self.lastWelcomeImage=[]
 		self.waitList=[]
 		self.restart=False
@@ -75,7 +119,9 @@ class MyClient(discord.Client):
 		self.welcomeMessage=''
 		self.botChannels=botChannels
 		self.blizztrackVersionState=blizztrack_service.read_version_state()
-		self.blizztrackAnnouncedVersions={}  # {track_key: set of version strings already role-pinged}
+		self.announcedVersions={}  # {track_key: set of version strings already announced (ping + #general)}
+		self.extractorVersionState={}  # {track_key: last seen version from .hcdn files}
+		self.versionAnnounceMessages={}  # {(track_key, from_ver, to_ver): {'msg': Message, 'regions': [...], 'ping': str}}
 
 	async def should_suppress_actions(self):
 		for guild in self.guilds:
@@ -100,22 +146,17 @@ class MyClient(discord.Client):
 			if suppressed != last_state:
 				if suppressed:
 					await self.change_presence(status=discord.Status.dnd)
-					print("Suppression active: Bot set to idle.")
+					logging.info("Suppression active: Bot set to idle.")
 				else:
 					await self.change_presence(status=discord.Status.online)
-					print("Suppression inactive: Bot set to online.")
+					logging.info("Suppression inactive: Bot set to online.")
 				last_state = suppressed
 			await asyncio.sleep(15)  # check every 15 seconds, or longer if you prefer
 
 	async def on_ready(self):
 		self.activeSuppressIDs=[uid for uid in SUPPRESS_USER_IDS if uid != self.user.id]
-		print('Logged on...')
+		logging.info('Logged on...')
 		self.loop.create_task(self.suppression_status_loop())
-		print('Loading heroes...')
-		await loadAll(self,argv)
-		await loadAllTest(self,argv)
-		self.heroesVersion = readVersion('.hversion')
-		self.heroesVersionTest = readVersion('.hversion-test')
 #		print('Fetching proxy emojis...')
 #		guild = client.get_guild(603924426769170433)
 #		if guild is None:
@@ -123,21 +164,35 @@ class MyClient(discord.Client):
 #			self.proxyEmojis = {}
 #		else:
 #			self.proxyEmojis = await getProxyEmojis(guild)
-		print('Filling up with Reddit posts...')
+		logging.info('Filling up with Reddit posts...')
 		self.forwardedPosts=[]
 		self.seenTitles=await fillPreviousPostTitles(self)#Fills seenTitles with all current titles
 		await prime_recent_discord_reddit_ids(self)
-		print("Bot is in these guilds:")
-		for g in client.guilds:
-			print(f"{g.name} ({g.id})")
+		logging.info("Bot is in these guilds:\n%s", '\n\n'.join(_guild_channel_summary(g) for g in client.guilds))
 		self.ready=True
-		await self.check_blizztrack_versions(announce_if_first_run=True)
+		if BLIZZTRACK_CHECK_ENABLED:
+			await self.check_blizztrack_versions(announce_if_first_run=True)
+		if EXTRACTOR_CHECK_ENABLED:
+			await self.check_extractor_versions()
 		logging.info("Probius running version: %s", read_probius_version())
-		print('Ready!')
+		logging.info('Ready!')
 		await ws_on_ready(self)
 
 	async def on_message(self, message):
-		print(f"{message.channel.guild}, {message.channel.name}, {message.author.name}#{message.author.discriminator} ({message.author.id}) wrote: {message.content}")
+		print(f"{message.channel.guild}, {message.channel.name}, {message.author.name}#{message.author.discriminator} ({message.author.id}) wrote: »{_log_message_content(message)}«")
+		for attachment in message.attachments:
+			ct = attachment.content_type or ''
+			if ct.startswith('image/'):
+				label = 'image'
+			elif ct.startswith('video/'):
+				label = 'video'
+			elif ct.startswith('audio/'):
+				label = 'audio'
+			else:
+				label = 'file'
+			print(f"[{label}] {attachment.url}")
+		for sticker in message.stickers:
+			print(f"[sticker] {sticker.url}")
 		## Repeat command for Probius (moldy) - Not suppressed
 		if '[' in message.content:
 			for txt in findTexts(message):
@@ -166,6 +221,8 @@ class MyClient(discord.Client):
 		await removeEmbeds(message)
 
 	async def on_message_edit(self, before, after):
+		if not before.author.bot:
+			print(f"{before.channel.guild}, {before.channel.name}, {before.author.name}#{before.author.discriminator} ({before.author.id}) edited: »{_log_message_content(before)}« → »{_log_message_content(after)}«")
 		if await self.should_suppress_actions():
 			return
 		await super().on_message_edit(before, after) if hasattr(super(), "on_message_edit") else None
@@ -190,6 +247,24 @@ class MyClient(discord.Client):
 				await asyncio.sleep(10)
 				await message.delete()
 
+	async def on_message_delete(self, message):
+		if message.author.bot:
+			return
+		print(f"{message.channel.guild}, {message.channel.name}, {message.author.name}#{message.author.discriminator} ({message.author.id}) deleted: {message.content}")
+		for attachment in message.attachments:
+			ct = attachment.content_type or ''
+			if ct.startswith('image/'):
+				label = 'image'
+			elif ct.startswith('video/'):
+				label = 'video'
+			elif ct.startswith('audio/'):
+				label = 'audio'
+			else:
+				label = 'file'
+			print(f"[{label}] {attachment.url}")
+		for sticker in message.stickers:
+			print(f"[sticker] {sticker.url}")
+
 	async def on_raw_reaction_add(self, payload):
 		if await self.should_suppress_actions():
 			return
@@ -211,10 +286,12 @@ class MyClient(discord.Client):
 			return
 		if is_advisor_message(message):
 			return
+		author = message.author
+		print(f"{channel.guild}, {channel.name}, {member.name}#{member.discriminator} ({member.id}) added reaction {payload.emoji} to message by {author.name}#{author.discriminator} ({author.id}): »{_log_message_content(message)}«")
 		if await ws_on_reaction_add(payload, message, member, self):
 			return
 		if self.user and message.author.id==self.user.id:#Message is from Probius
-			if str(payload.emoji)=='👎':#downvoted with thumbs down
+			if str(payload.emoji)=='\U0001f44e':#downvoted with thumbs down
 				if await ws_check_reddit_downvote(message, member, self):
 					return
 				elif 'reddit.com' in message.content:
@@ -226,7 +303,7 @@ class MyClient(discord.Client):
 				await message.delete()
 				return
 
-			elif str(payload.emoji)=='👍' and message.reactions[[i.emoji for i in message.reactions].index(str(payload.emoji))].me:
+			elif str(payload.emoji)=='\U0001f44d' and message.reactions[[i.emoji for i in message.reactions].index(str(payload.emoji))].me:
 				if 'Talent build' in message.content:
 					await message.remove_reaction(payload.emoji,message.author)
 					await printBuildFromReaction(client,message)
@@ -241,11 +318,23 @@ class MyClient(discord.Client):
 		if await self.should_suppress_actions():
 			return
 		await super().on_raw_reaction_remove(payload) if hasattr(super(), "on_raw_reaction_remove") else None
-		member=client.get_user(payload.user_id)
+		member = self.get_user(payload.user_id)
+		if member is None:
+			try:
+				member = await self.fetch_user(payload.user_id)
+			except:
+				return
+		if self.user and member.id == self.user.id:
+			return
 		try:
-			message=await client.get_channel(payload.channel_id).fetch_message(payload.message_id)
+			channel = self.get_channel(payload.channel_id)
+			if channel is None:
+				channel = await self.fetch_channel(payload.channel_id)
+			message = await channel.fetch_message(payload.message_id)
 		except:
 			return
+		author = message.author
+		print(f"{channel.guild}, {channel.name}, {member.name}#{member.discriminator} ({member.id}) removed reaction {payload.emoji} from message by {author.name}#{author.discriminator} ({author.id}): »{_log_message_content(message)}«")
 		await ws_on_reaction_remove(payload, message, member, self)
 
 	async def on_member_join(self,member):
@@ -269,6 +358,37 @@ class MyClient(discord.Client):
 		if after.guild.id==DiscordGuildIDs['WindStriders']:
 			await ws_on_member_update(before, after, self)
 
+	async def on_guild_join(self, guild):
+		logging.info("Joined server:\n%s", _guild_channel_summary(guild))
+
+	async def on_guild_remove(self, guild):
+		logging.warning("Removed from server: %s (%s)", guild.name, guild.id)
+
+	async def on_guild_channel_create(self, channel):
+		if not isinstance(channel, discord.TextChannel):
+			return
+		perms = channel.permissions_for(channel.guild.me)
+		if perms.read_messages and perms.send_messages:
+			logging.info("[channel] %s: #%s — access gained (new channel)", channel.guild.name, channel.name)
+
+	async def on_guild_channel_delete(self, channel):
+		if not isinstance(channel, discord.TextChannel):
+			return
+		perms = channel.permissions_for(channel.guild.me)
+		if perms.read_messages and perms.send_messages:
+			logging.warning("[channel] %s: #%s — access lost (deleted)", channel.guild.name, channel.name)
+
+	async def on_guild_channel_update(self, before, after):
+		if not isinstance(after, discord.TextChannel):
+			return
+		me = after.guild.me
+		before_access = before.permissions_for(me).read_messages and before.permissions_for(me).send_messages
+		after_access = after.permissions_for(me).read_messages and after.permissions_for(me).send_messages
+		if before_access and not after_access:
+			logging.warning("[channel] %s: #%s — access lost", after.guild.name, after.name)
+		elif not before_access and after_access:
+			logging.info("[channel] %s: #%s — access gained", after.guild.name, after.name)
+
 	async def bgTaskSubredditForwarding(self):
 		await self.wait_until_ready()
 		while not self.ready and not self.is_closed():
@@ -280,7 +400,7 @@ class MyClient(discord.Client):
 			try:
 				await redditForwarding(self)
 			except Exception as e:
-				print(f"ERROR in bgTaskSubredditForwarding: {e}")
+				logging.error("ERROR in bgTaskSubredditForwarding: %s", e)
 			await asyncio.sleep(60)  # check every minute
 
 	async def bgTaskBlizztrackVersionCheck(self):
@@ -292,28 +412,19 @@ class MyClient(discord.Client):
 			try:
 				await self.check_blizztrack_versions()
 			except Exception as e:
-				print(f"ERROR in bgTaskBlizztrackVersionCheck: {e}")
+				logging.error("ERROR in bgTaskBlizztrackVersionCheck: %s", e)
 			await asyncio.sleep(300)
 
-	async def bgTaskHeroesTalentsVersionCheck(self):
+	async def bgTaskExtractorVersionCheck(self):
 		await self.wait_until_ready()
 		while not self.is_closed():
-			if not self.ready:
-				await asyncio.sleep(5)
+			if await self.should_suppress_actions():
+				await asyncio.sleep(60)
 				continue
 			try:
-				current_v = readVersion('.hversion')
-				if current_v and current_v != self.heroesVersion:
-					print(f"[heroes-talents] version changed: {self.heroesVersion} -> {current_v}, reloading...")
-					await loadAll(self, argv)
-					self.heroesVersion = current_v
-				current_vt = readVersion('.hversion-test')
-				if current_vt and current_vt != self.heroesVersionTest:
-					print(f"[heroes-talents-test] version changed: {self.heroesVersionTest} -> {current_vt}, reloading...")
-					await loadAllTest(self, argv)
-					self.heroesVersionTest = current_vt
+				await self.check_extractor_versions()
 			except Exception as e:
-				print(f"ERROR in bgTaskHeroesTalentsVersionCheck: {e}")
+				logging.error("ERROR in bgTaskExtractorVersionCheck: %s", e)
 			await asyncio.sleep(60)
 
 	async def check_blizztrack_versions(self,announce_if_first_run=False):
@@ -322,6 +433,9 @@ class MyClient(discord.Client):
 			logging.warning('Blizztrack check returned no data.')
 			return
 
+		if announce_if_first_run:
+			logging.info('Blizztrack versions: %s', ' | '.join(self.blizztrack_summary_lines(current_versions)))
+
 		previous_state=self.blizztrackVersionState if isinstance(self.blizztrackVersionState,dict) else {}
 		probius_channel=self.get_channel(DiscordChannelIDs['WS.Probius'])
 		if not previous_state:
@@ -329,7 +443,6 @@ class MyClient(discord.Client):
 			blizztrack_service.write_version_state(current_versions)
 			if announce_if_first_run and probius_channel is not None:
 				await probius_channel.send('blizztrack initial versions: '+' | '.join(self.blizztrack_summary_lines(current_versions)))
-			logging.info('Blizztrack initial state stored: %s', ' | '.join(self.blizztrack_summary_lines(current_versions)))
 			return
 
 		probius_channel=self.get_channel(DiscordChannelIDs['WS.Probius'])
@@ -339,6 +452,8 @@ class MyClient(discord.Client):
 			logging.warning('Probius channel unavailable; blizztrack updates only written to state file.')
 			return
 
+		general_channel=self.get_channel(DiscordChannelIDs['WS.General'])
+
 		for track_key,track_data in current_versions.items():
 			previous_track=previous_state.get(track_key,{})
 			previous_regions=previous_track.get('regions',{}) if isinstance(previous_track,dict) else {}
@@ -346,18 +461,68 @@ class MyClient(discord.Client):
 				prior_version=previous_regions.get(region)
 				if prior_version and prior_version!=current_version:
 					logging.info('Blizztrack update detected: track=%s region=%s from=%s to=%s',track_key,region,prior_version,current_version)
-					announced=self.blizztrackAnnouncedVersions.setdefault(track_key,set())
+					announced=self.announcedVersions.setdefault(track_key,set())
 					if current_version not in announced:
 						announced.add(current_version)
 						ping=f'<@&{DiscordRoleIDs["WS.Moldy"]}>'
+						if general_channel is not None and track_key!='test':
+							await general_channel.send(f'New game update: **Heroes of the Storm** {prior_version} → **{current_version}**')
 					else:
 						ping=''
-					await probius_channel.send(
-						f"Update detected! Game version: {track_key} updated from {prior_version} to {current_version} in region {region}.{' '+ping if ping else ''}"
-					)
+					msg_key=(track_key,prior_version,current_version)
+					if msg_key in self.versionAnnounceMessages:
+						state=self.versionAnnounceMessages[msg_key]
+						state['regions'].append(region)
+						regions_str=', '.join(state['regions'])
+						ping_str=f' {state["ping"]}' if state['ping'] else ''
+						await state['msg'].edit(content=f"Game version: {track_key} updated from {prior_version} to {current_version} in region {regions_str}.{ping_str}")
+					else:
+						ping_str=f' {ping}' if ping else ''
+						msg=await probius_channel.send(f"Game version: {track_key} updated from {prior_version} to {current_version} in region {region}.{ping_str}")
+						self.versionAnnounceMessages[msg_key]={'msg':msg,'regions':[region],'ping':ping}
 
 		self.blizztrackVersionState=current_versions
 		blizztrack_service.write_version_state(current_versions)
+
+	async def check_extractor_versions(self):
+		from heroesTalents import _resolve_data_path
+		tracks=[
+			('live', '.hcdn', False),
+			('test', '.hcdn-test', True),
+		]
+		probius_channel=self.get_channel(DiscordChannelIDs['WS.Probius'])
+		general_channel=self.get_channel(DiscordChannelIDs['WS.General'])
+		for track_key,hcdn_file,is_test in tracks:
+			resolved_path=_resolve_data_path(hcdn_file, is_test=is_test)
+			if not resolved_path:
+				continue
+			try:
+				with open(resolved_path, 'r', encoding='utf-8') as f:
+					current_version=f.read().strip()
+			except Exception as e:
+				logging.warning('Failed to read %s: %s', hcdn_file, e)
+				continue
+			if not current_version:
+				continue
+			prior_version=self.extractorVersionState.get(track_key)
+			self.extractorVersionState[track_key]=current_version
+			if prior_version is None:
+				logging.info('Extractor initial version: track=%s version=%s', track_key, current_version)
+				continue
+			if current_version==prior_version:
+				continue
+			logging.info('Extractor update detected: track=%s from=%s to=%s', track_key, prior_version, current_version)
+			announced=self.announcedVersions.setdefault(track_key,set())
+			if current_version not in announced:
+				announced.add(current_version)
+				ping=f'<@&{DiscordRoleIDs["WS.Moldy"]}>'
+				if general_channel is not None and not is_test:
+					await general_channel.send(f'New game update: **Heroes of the Storm** {prior_version} → **{current_version}**')
+			else:
+				ping=''
+			if probius_channel is not None:
+				ping_str=f' {ping}' if ping else ''
+				await probius_channel.send(f"Game version: {track_key} updated from {prior_version} to {current_version} (extractor).{ping_str}")
 
 if '--blizztrack-check' in argv:
 	raise SystemExit(asyncio.run(run_blizztrack_healthcheck_mode()))

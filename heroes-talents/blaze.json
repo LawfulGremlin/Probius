@@ -20,6 +20,15 @@
     "RoleTank",
     "SoloLaner"
   ],
+  "stats": {
+    "hp": 2900,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 60,
+    "attackRange": 4.5,
+    "attackSpeed": 1,
+    "radius": 0.9375
+  },
   "abilities": {
     "Blaze": [
       {

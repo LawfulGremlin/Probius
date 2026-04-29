@@ -19,6 +19,15 @@
     "RoleSupport",
     "SelfHealer"
   ],
+  "stats": {
+    "hp": 1835,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 261,
+    "attackRange": 1.5,
+    "attackSpeed": 0.6667,
+    "radius": 0.6875
+  },
   "abilities": {
     "Stukov": [
       {

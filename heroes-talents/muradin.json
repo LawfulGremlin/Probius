@@ -20,12 +20,21 @@
     "Overconfident",
     "RoleTank"
   ],
+  "stats": {
+    "hp": 2765,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 88,
+    "attackRange": 1,
+    "attackSpeed": 1.1111,
+    "radius": 0.8125
+  },
   "abilities": {
     "Muradin": [
       {
         "uid": "0dce1c",
         "name": "Storm Bolt",
-        "description": "Throw a hammer, dealing 110 (+4% per level) damage to the first enemy hit and Stunning them for 1.25 seconds  Quest: Basic Attack enemies affected by Stuns, Slows, or Roots. Slowed or Rooted enemies grant 1 stack. Stunned enemies provide 2 stacks.  Reward: Upon hitting 40 targets, Storm Bolt pierces to hit an additional target, and Muradin's Basic Attacks reduce the cooldown of Storm Bolt by 0.5 seconds.  Mythic Reward: Upon hitting 160 targets, Storm Bolt's range is increased by 50%, width increased by 100%, and now pierces all targets.",
+        "description": "Throw a hammer, dealing 110 (+4% per level) damage to the first enemy hit and Stunning them for 1.25 seconds  Quest: Basic Attack Heroes affected by Stuns, Slows, or Roots. Slowed or Rooted enemies grant 1 stack. Stunned enemies provide 2 stacks.  If the Hero dies within 3 seconds, gain 5 stacks.  Reward: Upon hitting 45 targets, Storm Bolt pierces to hit an additional target, and Muradin's Basic Attacks reduce the cooldown of Storm Bolt by 0.5 seconds.  Mythic Reward: Upon hitting 160 targets, Storm Bolt's range is increased by 50%, width increased by 100%, and now pierces all targets.",
         "hotkey": "Q",
         "abilityId": "Muradin|Q1",
         "cooldown": 10,
@@ -288,7 +297,7 @@
         "tooltipId": "MuradinDwarfTossDwarfLaunchTalent",
         "talentTreeId": "MuradinMasteryDwarfTossDwarfLaunch",
         "name": "Dwarf Launch",
-        "description": "Increase the range of Dwarf Toss by 30%. Hitting an enemy Hero with Dwarf Toss reduces its cooldown by 2 seconds.",
+        "description": "Increase the range of Dwarf Toss by 30%. Hitting an enemy Hero with Dwarf Toss reduces its cooldown by 1 second.",
         "icon": "storm_ui_icon_muradin_dwarftoss.png",
         "type": "E",
         "sort": 1,

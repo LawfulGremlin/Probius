@@ -17,6 +17,15 @@
     "TowerPusher",
     "WaveClearer"
   ],
+  "stats": {
+    "hp": 1425,
+    "resource": 4,
+    "resourceType": "Ammo",
+    "attackDamage": 120,
+    "attackRange": 5.5,
+    "attackSpeed": 1,
+    "radius": 0.6875
+  },
   "abilities": {
     "Junkrat": [
       {

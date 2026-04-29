@@ -18,6 +18,15 @@
     "TowerPusher",
     "WaveClearer"
   ],
+  "stats": {
+    "hp": 1260,
+    "resource": 600,
+    "resourceType": "Mana",
+    "attackDamage": 33,
+    "attackRange": 3,
+    "attackSpeed": 1.1111,
+    "radius": 0.6875
+  },
   "abilities": {
     "Probius": [
       {

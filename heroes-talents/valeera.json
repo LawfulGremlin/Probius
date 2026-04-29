@@ -19,6 +19,15 @@
     "RoleAutoAttacker",
     "RoleCaster"
   ],
+  "stats": {
+    "hp": 2047,
+    "resource": 100,
+    "resourceType": "Energy",
+    "attackDamage": 79,
+    "attackRange": 1.25,
+    "attackSpeed": 2,
+    "radius": 0.625
+  },
   "abilities": {
     "Valeera": [
       {

@@ -19,6 +19,15 @@
     "RoleSupport",
     "SelfHealer"
   ],
+  "stats": {
+    "hp": 1500,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 60,
+    "attackRange": 5.5,
+    "attackSpeed": 1.25,
+    "radius": 0.625
+  },
   "abilities": {
     "LiLi": [
       {

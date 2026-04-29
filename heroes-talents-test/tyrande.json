@@ -21,6 +21,15 @@
     "RoleSupport",
     "SelfHealer"
   ],
+  "stats": {
+    "hp": 1511,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 55,
+    "attackRange": 6,
+    "attackSpeed": 1.3333,
+    "radius": 0.625
+  },
   "abilities": {
     "Tyrande": [
       {

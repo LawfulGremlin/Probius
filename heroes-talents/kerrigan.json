@@ -18,6 +18,15 @@
     "Overconfident",
     "RoleCaster"
   ],
+  "stats": {
+    "hp": 1764,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 115,
+    "attackRange": 2,
+    "attackSpeed": 1.25,
+    "radius": 0.6875
+  },
   "abilities": {
     "Kerrigan": [
       {

@@ -20,6 +20,9 @@
     "RoleTank",
     "WaveClearer"
   ],
+  "stats": {
+    "hp": 1
+  },
   "abilities": {
     "LostVikings": [
       {

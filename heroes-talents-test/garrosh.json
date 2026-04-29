@@ -19,6 +19,15 @@
     "Overconfident",
     "RoleTank"
   ],
+  "stats": {
+    "hp": 2060,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 137,
+    "attackRange": 1.25,
+    "attackSpeed": 0.8333,
+    "radius": 0.875
+  },
   "abilities": {
     "Garrosh": [
       {

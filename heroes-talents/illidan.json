@@ -20,6 +20,13 @@
     "Overconfident",
     "RoleAutoAttacker"
   ],
+  "stats": {
+    "hp": 1725,
+    "attackDamage": 78,
+    "attackRange": 1.25,
+    "attackSpeed": 1.8182,
+    "radius": 0.625
+  },
   "abilities": {
     "Illidan": [
       {

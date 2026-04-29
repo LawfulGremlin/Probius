@@ -19,6 +19,15 @@
     "RoleCaster",
     "SoloLaner"
   ],
+  "stats": {
+    "hp": 1950,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 160,
+    "attackRange": 1.5,
+    "attackSpeed": 1.2002,
+    "radius": 0.8125
+  },
   "abilities": {
     "Alarak": [
       {

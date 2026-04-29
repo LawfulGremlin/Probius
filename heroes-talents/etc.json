@@ -21,6 +21,15 @@
     "RoleTank",
     "SelfHealer"
   ],
+  "stats": {
+    "hp": 2280,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 99,
+    "attackRange": 1.5,
+    "attackSpeed": 1.25,
+    "radius": 0.9375
+  },
   "abilities": {
     "ETC": [
       {

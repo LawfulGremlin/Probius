@@ -1,4 +1,5 @@
 import random
+import re
 import discord
 
 from heroesAliases import *
@@ -62,6 +63,14 @@ async def mainProbius(client,message,texts,blizztrack_service):
 		channelName='hots' if channelName=='heroes-got-canceled' else channelName
 		loggingMessage=f"{guildname}, {channelName}, {message.author.name}#{message.author.discriminator} ({message.author.id}) issued command {message.content}"
 		print(loggingMessage)
+
+	# Original-case [all/...] queries, consumed in order so AND/OR/NOT keywords survive findTexts' lowercasing.
+	allRawQueries=[]
+	for line in message.content.split('\n'):
+		if line and line[0]=='>':
+			continue
+		allRawQueries+=[m.group(1) for m in re.finditer(r'\[all\s*/(.+?)\]',line,re.IGNORECASE)]
+	allRawIdx=0
 
 	for text in texts:
 		command=text[0].replace(' ','')
@@ -132,8 +141,10 @@ async def mainProbius(client,message,texts,blizztrack_service):
 			await confidence(message.channel,text)
 			continue
 		if command=='exit' and message.author.id in ProbiusPrivilegeIDs:
+			print(f"{message.author.name} executed exit")
 			await client.close()
 		if command in restartAliases and message.author.id in ProbiusPrivilegeIDs:
+			print(f"{message.author.name} executed {command}")
 			client.restart=True
 			await client.logout()
 		if command in mapImageAliases:
@@ -149,6 +160,7 @@ async def mainProbius(client,message,texts,blizztrack_service):
 			await lfg(message.channel,text[1],client)
 			continue
 		if command in deleteAliases:
+			print(f"{message.author.name} executed delete on {text[1]}")
 			await deleteMessages(message.author,text[1],client)
 			continue
 		if command in patchNotesAliases:
@@ -261,7 +273,9 @@ async def mainProbius(client,message,texts,blizztrack_service):
 			await message.channel.send('All hero alternate names: <https://github.com/Asddsa76/Probius/blob/master/aliases.py>')
 			continue
 		if command == 'all':
-			await printAll(client,message,text[1],True)
+			rawQuery=allRawQueries[allRawIdx] if allRawIdx<len(allRawQueries) else text[1]
+			allRawIdx+=1
+			await printAll(client,message,rawQuery,True)
 			continue
 		if command in emojiAliases:
 			await message.channel.send('Emojis: [:hero/emotion], where emotion is of the following: happy, lol, sad, silly, meh, angry, cool, oops, love, or wow.')
@@ -273,11 +287,11 @@ async def mainProbius(client,message,texts,blizztrack_service):
 			if not (test_v and live_v and parseVersion(test_v) > parseVersion(live_v)):
 				await message.channel.send('No PTR data available.')
 				continue
-			if hero not in client.heroPages or hero not in client.heroPages_test:
+			if not hero_file_exists(hero) or not hero_file_exists(hero, is_test=True):
 				await message.channel.send(f'No data found for {text[1]}.')
 				continue
-			(abilities, talents) = client.heroPages[hero]
-			(test_abilities, test_talents) = client.heroPages_test[hero]
+			(abilities, talents) = await get_hero_data(hero)
+			(test_abilities, test_talents) = await get_hero_data(hero, is_test=True)
 			log_source_used(False)
 			log_source_used(True)
 			sections = diffHeroPtrChanges(abilities, talents, test_abilities, test_talents, live_v, test_v)
@@ -316,7 +330,7 @@ async def mainProbius(client,message,texts,blizztrack_service):
 				await heroStats(hero,message.channel)
 				continue
 		try:
-			(abilities,talents)=client.heroPages[hero]
+			(abilities,talents)=await get_hero_data(hero)
 		except:
 			try:#If no results, then "hero" isn't a hero
 				await printAll(client,message,text[0])
@@ -329,7 +343,9 @@ async def mainProbius(client,message,texts,blizztrack_service):
 		try:
 			tier=text[1]#If there is no identifier, then it throws exception
 			if tier in randomAliases:
-				await message.channel.send(printTier(talents,random.randint(0,6)))
+				live_v = readVersion('.hversion')
+				random_output = printTier(talents,random.randint(0,6))
+				await message.channel.send(f"**Live [{live_v}]**\n{random_output}" if live_v else random_output)
 				continue
 			if tier in randomBuildAliases:
 				await randomBuild(client, message.channel, hero)
@@ -337,8 +353,12 @@ async def mainProbius(client,message,texts,blizztrack_service):
 		except:
 			quote=getQuote(hero)
 			output='\n'.join(abilities)
-			await printLarge(message.channel,quote+output)
-			await heroStats(hero,message.channel)
+			live_v = readVersion('.hversion')
+			stat_line = hero_stat_line(hero)
+			header = (f"**Live [{live_v}]**\n" if live_v else '') + quote
+			if stat_line:
+				header += stat_line + '\n'
+			await printLarge(message.channel, header + output)
 			continue
 		if output=='':
 			if ',' in tier and any(i in tier for i in talentAliases):
@@ -351,9 +371,10 @@ async def mainProbius(client,message,texts,blizztrack_service):
 
 				live_v = readVersion('.hversion')
 				test_v = readVersion('.hversion-test')
-				if test_v and live_v and parseVersion(test_v) > parseVersion(live_v) and hero in client.heroPages_test:
+				showed_comparison = False
+				if test_v and live_v and parseVersion(test_v) > parseVersion(live_v) and hero_file_exists(hero, is_test=True):
 					try:
-						(_, test_talents) = client.heroPages_test[hero]
+						(_, test_talents) = await get_hero_data(hero, is_test=True)
 						log_source_used(True)
 						live_block, ptr_block = diffTierWithMoves(talents, test_talents, tier_index)
 						if ptr_block.strip() and ptr_block != live_block:
@@ -361,14 +382,21 @@ async def mainProbius(client,message,texts,blizztrack_service):
 								f"**Live [{live_v}]**\n{live_block}\n\n"
 								f"**PTR [{test_v}]**\n{ptr_block}"
 							)
+							showed_comparison = True
 					except:
 						pass
+				if not showed_comparison and live_v:
+					output = f"**Live [{live_v}]**\n{output}"
 				tier=tier_index#Keep tier as index for rest of flow
 			elif tier in ['mount','z']:
-				await message.channel.send(printAbility(abilities,'z'))
+				live_v = readVersion('.hversion')
+				mount_output = printAbility(abilities,'z')
+				await message.channel.send(f"**Live [{live_v}]**\n{mount_output}" if live_v else mount_output)
 				continue
 			elif tier=='extra':
-				await message.channel.send(printAbility(abilities,'1'))
+				live_v = readVersion('.hversion')
+				extra_output = printAbility(abilities,'1')
+				await message.channel.send(f"**Live [{live_v}]**\n{extra_output}" if live_v else extra_output)
 				continue
 			elif tier=='r':#Ultimate
 				if hero=='Tracer':#She starts with her heroic already unlocked, and only has 1 heroic
@@ -379,9 +407,10 @@ async def mainProbius(client,message,texts,blizztrack_service):
 						output=abilities[3]+'\n'+output#Deathwing has Cataclysm baseline
 				live_v=readVersion('.hversion')
 				test_v=readVersion('.hversion-test')
-				if test_v and live_v and parseVersion(test_v) > parseVersion(live_v) and hero in client.heroPages_test:
+				showed_comparison = False
+				if test_v and live_v and parseVersion(test_v) > parseVersion(live_v) and hero_file_exists(hero, is_test=True):
 					try:
-						(test_abilities,test_talents)=client.heroPages_test[hero]
+						(test_abilities,test_talents)=await get_hero_data(hero, is_test=True)
 						log_source_used(True)
 						if hero=='Tracer':
 							test_output=test_abilities[3]
@@ -395,15 +424,19 @@ async def mainProbius(client,message,texts,blizztrack_service):
 								f"**Live [{live_v}]**\n{live_block}\n\n"
 								f"**PTR [{test_v}]**\n{ptr_block}"
 							)
+							showed_comparison = True
 					except:
 						pass
+				if not showed_comparison and live_v:
+					output = f"**Live [{live_v}]**\n{output}"
 			elif len(tier)==1 and tier in 'dqwe':#Ability (dqwe)
 				output=printAbility(abilities,tier)
 				live_v=readVersion('.hversion')
 				test_v=readVersion('.hversion-test')
-				if test_v and live_v and parseVersion(test_v) > parseVersion(live_v) and hero in client.heroPages_test:
+				showed_comparison = False
+				if test_v and live_v and parseVersion(test_v) > parseVersion(live_v) and hero_file_exists(hero, is_test=True):
 					try:
-						(test_abilities,_)=client.heroPages_test[hero]
+						(test_abilities,_)=await get_hero_data(hero, is_test=True)
 						log_source_used(True)
 						test_output=printAbility(test_abilities,tier)
 						if test_output != output:
@@ -412,15 +445,19 @@ async def mainProbius(client,message,texts,blizztrack_service):
 								f"**Live [{live_v}]**\n{live_diff}\n\n"
 								f"**PTR [{test_v}]**\n{ptr_diff}"
 							)
+							showed_comparison = True
 					except:
 						pass
+				if not showed_comparison and live_v:
+					output = f"**Live [{live_v}]**\n{output}"
 			elif tier == 'trait':
 				output = printAbility(abilities, 'd')
 				live_v = readVersion('.hversion')
 				test_v = readVersion('.hversion-test')
-				if test_v and live_v and parseVersion(test_v) > parseVersion(live_v) and hero in client.heroPages_test:
+				showed_comparison = False
+				if test_v and live_v and parseVersion(test_v) > parseVersion(live_v) and hero_file_exists(hero, is_test=True):
 					try:
-						(test_abilities, _) = client.heroPages_test[hero]
+						(test_abilities, _) = await get_hero_data(hero, is_test=True)
 						log_source_used(True)
 						test_output = printAbility(test_abilities, 'd')
 						if test_output != output:
@@ -429,9 +466,11 @@ async def mainProbius(client,message,texts,blizztrack_service):
 								f"**Live [{live_v}]**\n{live_diff}\n\n"
 								f"**PTR [{test_v}]**\n{ptr_diff}"
 							)
-
+							showed_comparison = True
 					except:
 						pass
+				if not showed_comparison and live_v:
+					output = f"**Live [{live_v}]**\n{output}"
 			elif tier =='all':
 				await printEverything(client,message,abilities,talents)
 				return
@@ -440,12 +479,13 @@ async def mainProbius(client,message,texts,blizztrack_service):
 				continue
 			else:
 				output = await printSearch(abilities, talents, tier, hero, True)
-				if output and hero in client.heroPages_test:
-					live_v = readVersion('.hversion')
-					test_v = readVersion('.hversion-test')
+				live_v = readVersion('.hversion')
+				test_v = readVersion('.hversion-test')
+				showed_comparison = False
+				if output and hero_file_exists(hero, is_test=True):
 					if test_v and live_v and parseVersion(test_v) > parseVersion(live_v):
 						try:
-							(test_abilities, test_talents) = client.heroPages_test[hero]
+							(test_abilities, test_talents) = await get_hero_data(hero, is_test=True)
 							log_source_used(True)
 							test_output = await printSearch(test_abilities, test_talents, tier, hero, True)
 							if test_output != output:
@@ -458,8 +498,11 @@ async def mainProbius(client,message,texts,blizztrack_service):
 									f"**Live [{live_v}]**\n{live_block}\n\n"
 									f"**PTR [{test_v}]**\n{ptr_block}"
 								)
+								showed_comparison = True
 						except:
 							pass
+				if not showed_comparison and output and live_v:
+					output = f"**Live [{live_v}]**\n{output}"
 
 		if len(output)==2:#If len is 2, then it's an array with output split in half
 			if message.channel.name=='rage':

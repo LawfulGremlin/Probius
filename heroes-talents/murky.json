@@ -23,6 +23,13 @@
     "TowerPusher",
     "WaveClearer"
   ],
+  "stats": {
+    "hp": 730,
+    "attackDamage": 60,
+    "attackRange": 1.25,
+    "attackSpeed": 1.25,
+    "radius": 0.625
+  },
   "abilities": {
     "Murky": [
       {

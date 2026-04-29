@@ -21,6 +21,13 @@
     "RoleTank",
     "SoloLaner"
   ],
+  "stats": {
+    "hp": 2950,
+    "attackDamage": 130,
+    "attackRange": 1,
+    "attackSpeed": 0.9091,
+    "radius": 1.1875
+  },
   "abilities": {
     "Chogall": [
       {

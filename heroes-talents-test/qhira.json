@@ -21,6 +21,15 @@
     "RoleAutoAttacker",
     "SoloLaner"
   ],
+  "stats": {
+    "hp": 2000,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 100,
+    "attackRange": 2.25,
+    "attackSpeed": 1,
+    "radius": 0.625
+  },
   "abilities": {
     "Qhira": [
       {

@@ -1,4 +1,5 @@
 import discord
+import logging
 import time
 from discordIDs import *
 from functionsPrint import printLarge
@@ -57,8 +58,10 @@ async def ws_on_member_update(before, after, client):
 	core = after.guild.get_role(DiscordRoleIDs['WS.CoreMember'])
 	olympian = after.guild.get_role(DiscordRoleIDs['WS.Olympian'])
 	if core in after.roles and core not in before.roles:
+		print(f"{after.name} promoted to Core Member")
 		await client.get_channel(DiscordChannelIDs['WS.SecretCabal']).send('Welcome ' + after.mention + '!')
 	if olympian in after.roles and olympian not in before.roles:
+		print(f"{after.name} promoted to Olympian")
 		await client.get_channel(DiscordChannelIDs['WS.Pepega']).send('Welcome ' + after.mention + '!')
 
 
@@ -69,7 +72,9 @@ async def ws_on_reaction_add(payload, message, member, client):
 	if message.id in [DiscordMessageIDs['WS.ServerRules1'], DiscordMessageIDs['WS.ServerRules2']]:
 		ws_member = client.get_guild(DiscordGuildIDs['WindStriders']).get_member(payload.user_id)
 		if str(payload.emoji) in wsReactionRoles:
-			await ws_member.add_roles(client.get_guild(DiscordGuildIDs['WindStriders']).get_role(wsReactionRoles[str(payload.emoji)]))
+			role = client.get_guild(DiscordGuildIDs['WindStriders']).get_role(wsReactionRoles[str(payload.emoji)])
+			await ws_member.add_roles(role)
+			print(f"{ws_member.name} assigned role {role.name} via reaction")
 		if str(payload.emoji) == '🇱':
 			await giveLfgRoles(ws_member, client)
 		return True
@@ -159,7 +164,7 @@ async def ws_on_ready(client):
 			'Please read the rules channel and type here your **`Region`, `Rank`, and `Preferred Colour`**,'
 			' separated by commas, to get sorted and unlock the rest of the channels <:OrphAYAYA:657172520092565514>'
 		)
-		print("WARNING: rulesChannel not found; welcomeMessage uses fallback text.")
+		logging.warning("rulesChannel not found; welcomeMessage uses fallback text.")
 
 
 # ── Commands ──────────────────────────────────────────────────────────────────
@@ -178,8 +183,10 @@ async def ws_command_unsorted(message, client):
 async def ws_command_byprobiusbepurged(message, client):
 	if DiscordRoleIDs['WS.Olympian'] in [role.id for role in message.author.roles]:
 		people = [i for i in message.channel.guild.members if DiscordRoleIDs['WS.Unsorted'] in [role.id for role in i.roles]]
+		print(f"{message.author.name} purging {len(people)} unsorted members")
 		for person in people:
 			await message.channel.guild.kick(person, reason='Did not sort in time!')
+		print(f"Purge complete: {len(people)} members kicked")
 
 
 # ── Utility (WS-only, previously in miscFunctions.py) ────────────────────────
@@ -188,6 +195,7 @@ async def deleteMessages(author, ping, client):
 	guild = client.get_guild(DiscordGuildIDs['WindStriders'])
 	if DiscordRoleIDs['WS.Olympian'] not in [role.id for role in author.roles]:
 		return
+	print(f"{author.name} deleting messages from {ping}")
 	userId = int(ping.replace(' ', '').replace('!', '')[2:-1])
 	deletedCount = 0
 	for channel in guild.text_channels:
@@ -198,6 +206,7 @@ async def deleteMessages(author, ping, client):
 					deletedCount += 1
 		except:
 			pass
+	print(f"Deleted {deletedCount} messages from {ping}")
 	await guild.get_channel(DiscordChannelIDs['WS.Pepega']).send('Deleted ' + str(deletedCount) + ' messages from ' + ping)
 
 
@@ -328,6 +337,7 @@ async def sort(roles,member,olympian,client):
 	rolesToAdd.append(memberRole)
 	await member.add_roles(*rolesToAdd)
 	await member.remove_roles(unsorted)
+	print(f"{member.name} sorted with roles: {', '.join(r.name for r in rolesToAdd)}")
 	await channel.send('**'+member.name+'** has been sorted!')
 	await giveLfgRoles(member,client)
 

@@ -24,6 +24,15 @@
     "TowerPusher",
     "WaveClearer"
   ],
+  "stats": {
+    "hp": 2750,
+    "resource": 100,
+    "resourceType": "Energy",
+    "attackDamage": 117,
+    "attackRange": 2.5,
+    "attackSpeed": 0.6667,
+    "radius": 1.25
+  },
   "abilities": {
     "Deathwing": [
       {
@@ -54,7 +63,7 @@
         "description": "After 0.5 seconds, Deathwing lunges in a direction dealing 60 (+4% per level) damage to enemies and Slowing them by 35% for 2 seconds. Deathwing bites enemies at the end of the lunge, dealing an additional 120 (+4% per level) damage.  World Breaker: Earth Shatter Damage and Stun enemies in two lines",
         "hotkey": "E",
         "abilityId": "Deathwing|E1",
-        "cooldown": 5,
+        "cooldown": 6,
         "manaCost": 20,
         "icon": "storm_ui_icon_deathwing_onslaught.png",
         "type": "basic"
@@ -84,7 +93,7 @@
         "description": "After 3 seconds, fly into the sky, becoming Immune to all effects and gaining 2.5% Health per second. Once cast, this ability cannot be interrupted. Cannot be cast for 6 seconds after taking damage, Basic Attacking or casting an Ability.",
         "hotkey": "Z",
         "abilityId": "Deathwing|Z1",
-        "cooldown": 15,
+        "cooldown": 20,
         "icon": "storm_ui_icon_deathwing_mount.png",
         "type": "mount"
       }
@@ -351,7 +360,7 @@
         "tooltipId": "DeathwingGazeOntoDestruction",
         "talentTreeId": "DeathwingGazeOntoDestruction",
         "name": "Gaze Onto Destruction",
-        "description": "Hitting Heroes with Destroyer or World Breaker's landing causes their damage to be reduced by 75% and Slows them by 40% for 5 seconds.",
+        "description": "Hitting Heroes with Destroyer or World Breaker's landing causes their damage to be reduced by 75% and Slows them by 40% for 3.5 Seconds.",
         "icon": "storm_ui_icon_deathwing_deathdrop.png",
         "type": "Z",
         "sort": 2,

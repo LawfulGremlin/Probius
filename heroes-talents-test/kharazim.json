@@ -21,6 +21,15 @@
     "RoleSupport",
     "SelfHealer"
   ],
+  "stats": {
+    "hp": 2080,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 64,
+    "attackRange": 1.75,
+    "attackSpeed": 2,
+    "radius": 0.625
+  },
   "abilities": {
     "Kharazim": [
       {

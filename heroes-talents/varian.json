@@ -19,6 +19,15 @@
     "RoleAutoAttacker",
     "RoleTank"
   ],
+  "stats": {
+    "hp": 2220,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 74,
+    "attackRange": 1.25,
+    "attackSpeed": 1.25,
+    "radius": 0.75
+  },
   "abilities": {
     "Varian": [
       {

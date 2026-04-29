@@ -18,6 +18,15 @@
     "RoleSupport",
     "SelfHealer"
   ],
+  "stats": {
+    "hp": 1700,
+    "resource": 475,
+    "resourceType": "Stored Energy",
+    "attackDamage": 64,
+    "attackRange": 5.5,
+    "attackSpeed": 1.25,
+    "radius": 0.625
+  },
   "abilities": {
     "Auriel": [
       {

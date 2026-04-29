@@ -20,6 +20,15 @@
     "Overconfident",
     "RoleTank"
   ],
+  "stats": {
+    "hp": 2150,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 81,
+    "attackRange": 1.5,
+    "attackSpeed": 1,
+    "radius": 1.0625
+  },
   "abilities": {
     "Anubarak": [
       {

@@ -20,6 +20,15 @@
     "RoleCaster",
     "WaveClearer"
   ],
+  "stats": {
+    "hp": 1650,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 14,
+    "attackRange": 6.5,
+    "attackSpeed": 4,
+    "radius": 0.8125
+  },
   "abilities": {
     "Tassadar": [
       {

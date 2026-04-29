@@ -20,6 +20,13 @@
     "TowerPusher",
     "WaveClearer"
   ],
+  "stats": {
+    "hp": 685,
+    "attackDamage": 26,
+    "attackRange": 1,
+    "attackSpeed": 1.4286,
+    "radius": 0.75
+  },
   "abilities": {
     "Abathur": [
       {

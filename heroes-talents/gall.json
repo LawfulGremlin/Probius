@@ -16,6 +16,9 @@
     "GoalsDisabled",
     "RoleCaster"
   ],
+  "stats": {
+    "hp": 1
+  },
   "abilities": {
     "Gall": [
       {

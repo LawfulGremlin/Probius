@@ -21,6 +21,15 @@
     "SelfHealer",
     "SoloLaner"
   ],
+  "stats": {
+    "hp": 2678,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 155,
+    "attackRange": 1.5,
+    "attackSpeed": 0.7692,
+    "radius": 0.75
+  },
   "abilities": {
     "Yrel": [
       {

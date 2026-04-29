@@ -18,6 +18,15 @@
     "RoleAutoAttacker",
     "WaveClearer"
   ],
+  "stats": {
+    "hp": 1925,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 50,
+    "attackRange": 4.5,
+    "attackSpeed": 4,
+    "radius": 0.8125
+  },
   "abilities": {
     "Tychus": [
       {

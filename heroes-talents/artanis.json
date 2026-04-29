@@ -20,6 +20,15 @@
     "RoleAutoAttacker",
     "RoleTank"
   ],
+  "stats": {
+    "hp": 2490,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 111,
+    "attackRange": 1.25,
+    "attackSpeed": 1,
+    "radius": 0.8125
+  },
   "abilities": {
     "Artanis": [
       {
@@ -342,7 +351,7 @@
         "tooltipId": "ArtanisSpearofAdunSuppressionPulseOrbitalBombardmentTalent",
         "talentTreeId": "ArtanisSpearofAdunSuppressionPulseOrbitalBombardment",
         "name": "Orbital Bombardment",
-        "description": "Suppression Pulse gains an additional charge. There is a 10 second cooldown between uses.",
+        "description": "Suppression Pulse gains an additional charge.  There is a 10 second cooldown between uses.",
         "icon": "storm_ui_icon_artanis_disruptionweb.png",
         "type": "Heroic",
         "sort": 1,

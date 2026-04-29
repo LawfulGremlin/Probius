@@ -17,6 +17,15 @@
     "Ganker",
     "RoleAutoAttacker"
   ],
+  "stats": {
+    "hp": 1330,
+    "resource": 20,
+    "resourceType": "Ammo",
+    "attackDamage": 23,
+    "attackRange": 5,
+    "attackSpeed": 8,
+    "radius": 0.625
+  },
   "abilities": {
     "Tracer": [
       {

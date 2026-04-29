@@ -20,6 +20,15 @@
     "Overconfident",
     "RoleTank"
   ],
+  "stats": {
+    "hp": 2765,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 88,
+    "attackRange": 1,
+    "attackSpeed": 1.1111,
+    "radius": 0.8125
+  },
   "abilities": {
     "Muradin": [
       {
@@ -288,7 +297,7 @@
         "tooltipId": "MuradinDwarfTossDwarfLaunchTalent",
         "talentTreeId": "MuradinMasteryDwarfTossDwarfLaunch",
         "name": "Dwarf Launch",
-        "description": "Increase the range of Dwarf Toss by 30%. Hitting an enemy Hero with Dwarf Toss reduces its cooldown by 1 seconds.",
+        "description": "Increase the range of Dwarf Toss by 30%. Hitting an enemy Hero with Dwarf Toss reduces its cooldown by 1 second.",
         "icon": "storm_ui_icon_muradin_dwarftoss.png",
         "type": "E",
         "sort": 1,

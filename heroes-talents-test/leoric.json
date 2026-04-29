@@ -18,6 +18,15 @@
     "RoleTank",
     "WaveClearer"
   ],
+  "stats": {
+    "hp": 2550,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 115,
+    "attackRange": 2,
+    "attackSpeed": 0.7692,
+    "radius": 0.8125
+  },
   "abilities": {
     "Leoric": [
       {

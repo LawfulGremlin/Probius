@@ -18,6 +18,15 @@
     "RoleAutoAttacker",
     "RoleCaster"
   ],
+  "stats": {
+    "hp": 1660,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 125,
+    "attackRange": 2,
+    "attackSpeed": 1.1111,
+    "radius": 0.6875
+  },
   "abilities": {
     "Cassia": [
       {

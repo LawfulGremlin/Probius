@@ -21,6 +21,15 @@
     "RoleSupport",
     "SelfHealer"
   ],
+  "stats": {
+    "hp": 1511,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 55,
+    "attackRange": 6,
+    "attackSpeed": 1.3333,
+    "radius": 0.625
+  },
   "abilities": {
     "Tyrande": [
       {
@@ -48,7 +57,7 @@
       {
         "uid": "b4597d",
         "name": "Lunar Flare",
-        "description": "After 0.75 seconds, deal 150 (+4% per level) damage and Stun enemies in the target area for 0.75 seconds. Restores 25 Mana per enemy hit.  Quest: Hitting a Hero with Lunar Flare increases its damage by 4%, up to 160%.  Reward: After hitting 10 Heroes, increase Lunar Flare's range by 30%.  Reward: After hitting 20 Heroes, Sentinel now pierces the first Hero hit.  Mythic Reward: After hitting 40 Heroes, Every 8th Basic Attacks fires a Lunar Flare, prioritizing Heroes.",
+        "description": "After 0.75 seconds, deal 150 (+4% per level) damage and Stun enemies in the target area for 0.75 seconds. Restores 25 Mana per enemy hit.  Quest: Hitting a Hero with Lunar Flare increases its damage by 3%, up to 120%. Double this bonus if the Hero dies within 3 seconds.  Reward: After hitting 10 Heroes, increase Lunar Flare's range by 30%.  Reward: After hitting 20 Heroes, Sentinel now pierces the first Hero hit.  Mythic Reward: After hitting 40 Heroes, Every 8th Basic Attacks fires a Lunar Flare, prioritizing Heroes. Attack Range increased by 1.",
         "hotkey": "E",
         "abilityId": "Tyrande|E1",
         "cooldown": 13,
@@ -245,7 +254,7 @@
         "tooltipId": "TyrandeLightOfEluneQuickeningBlessingTalent",
         "talentTreeId": "TyrandeMasteryLightofEluneQuickeningBlessing",
         "name": "Quickening Blessing",
-        "description": "Gain 5% Movement Speed. Light of Elune increases the target's Movement Speed by 20% for 3 seconds.",
+        "description": "Gain 5% Movement Speed. Light of Elune increases the target's Movement Speed by 25% for 3 seconds.",
         "icon": "storm_ui_icon_tyrande_lightofelune.png",
         "type": "Q",
         "sort": 1,
@@ -327,7 +336,7 @@
         "tooltipId": "TyrandeEyesOfTheHuntress",
         "talentTreeId": "TyrandeEyesOfTheHuntress",
         "name": "Eyes of the Huntress",
-        "description": "Shadowstalk reveals all enemy Heroes for 10 seconds and heals for 75% more.",
+        "description": "Shadowstalk reveals all enemy Heroes for 10 seconds and heals for 100% more.",
         "icon": "storm_ui_icon_tyrande_shadowstalk.png",
         "type": "Heroic",
         "sort": 1,

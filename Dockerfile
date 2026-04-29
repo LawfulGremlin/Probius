@@ -1,20 +1,10 @@
-FROM python:3.12-slim AS builder
+FROM python:3.12-alpine AS builder
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_CACHE_DIR=1
 
-# Build-time dependencies needed when wheels are unavailable.
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        build-essential \
-        gcc \
-        gfortran \
-        libjpeg-dev \
-        liblapack-dev \
-        libopenblas-dev \
-        libpng-dev \
-        zlib1g-dev && \
-    rm -rf /var/lib/apt/lists/*
+# Build tools in case any deps lack musl wheels and need to compile from source
+RUN apk add --no-cache gcc musl-dev python3-dev
 
 WORKDIR /app
 
@@ -26,21 +16,11 @@ RUN pip install --upgrade pip && \
     pip install -r requirements.txt
 
 
-FROM python:3.12-slim AS runtime
+FROM python:3.12-alpine AS runtime
 
 ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PATH="/opt/venv/bin:$PATH"
-
-# Runtime shared libraries for scipy/pillow.
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        libjpeg62-turbo \
-        liblapack3 \
-        libopenblas0-pthread \
-        libpng16-16 \
-        zlib1g && \
-    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 

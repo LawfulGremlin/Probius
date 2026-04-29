@@ -18,6 +18,15 @@
     "RoleSupport",
     "SelfHealer"
   ],
+  "stats": {
+    "hp": 1400,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 62,
+    "attackRange": 5.5,
+    "attackSpeed": 1,
+    "radius": 0.625
+  },
   "abilities": {
     "Whitemane": [
       {

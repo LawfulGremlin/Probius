@@ -20,6 +20,15 @@
     "RoleTank",
     "SoloLaner"
   ],
+  "stats": {
+    "hp": 2473,
+    "resource": 100,
+    "resourceType": "Brew",
+    "attackDamage": 90,
+    "attackRange": 2,
+    "attackSpeed": 1.1111,
+    "radius": 0.9375
+  },
   "abilities": {
     "Chen": [
       {
@@ -40,7 +49,7 @@
         "hotkey": "W",
         "abilityId": "Chen|W1",
         "cooldown": 5,
-        "manaCost": 35,
+        "manaCost": 40,
         "icon": "storm_ui_icon_chen_kegsmash.png",
         "type": "basic"
       },
@@ -131,7 +140,7 @@
         "tooltipId": "ChenAccumulatingFlame",
         "talentTreeId": "ChenAccumulatingFlame",
         "name": "Accumulating Flame",
-        "description": "Reward: Damage Heroes with Breath of Fire to permanently increase periodic damage by 0.25.  Kills grant 2.  Reward: After gaining 20 Damage, increase the range of Keg Smash.  Mythic Reward: Upon gaining 75 Damage, Breath of Fire reduces enemy armor by 20 and its duration is increased by 0.75 Seconds each time Chen attacks the Hero.",
+        "description": "Reward: Damage enemy Heroes with Breath of Fire to permanently increase periodic damage by 0.25. Kills grant 2.  Reward: After gaining 20 damage, increase the range of Keg Smash.  Mythic Reward: Upon gaining 75 damage, Breath of Fire reduces enemy Armor by 20 and its duration is increased by 0.75 seconds each time Chen attacks the Hero.",
         "icon": "storm_ui_icon_chen_breathoffire.png",
         "type": "W",
         "sort": 1,

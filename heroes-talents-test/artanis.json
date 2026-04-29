@@ -20,6 +20,15 @@
     "RoleAutoAttacker",
     "RoleTank"
   ],
+  "stats": {
+    "hp": 2490,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 111,
+    "attackRange": 1.25,
+    "attackSpeed": 1,
+    "radius": 0.8125
+  },
   "abilities": {
     "Artanis": [
       {

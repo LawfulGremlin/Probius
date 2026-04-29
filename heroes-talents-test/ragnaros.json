@@ -19,6 +19,15 @@
     "RoleCaster",
     "WaveClearer"
   ],
+  "stats": {
+    "hp": 2075,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 180,
+    "attackRange": 2,
+    "attackSpeed": 0.8333,
+    "radius": 1
+  },
   "abilities": {
     "Ragnaros": [
       {

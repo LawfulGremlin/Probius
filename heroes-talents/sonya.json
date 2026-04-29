@@ -21,6 +21,15 @@
     "SoloLaner",
     "WaveClearer"
   ],
+  "stats": {
+    "hp": 2450,
+    "resource": 100,
+    "resourceType": "Fury",
+    "attackDamage": 84,
+    "attackRange": 1.5,
+    "attackSpeed": 1.25,
+    "radius": 0.75
+  },
   "abilities": {
     "Sonya": [
       {
@@ -318,7 +327,7 @@
         "tooltipId": "BarbarianLeapArreatCraterTalent",
         "talentTreeId": "BarbarianArreatCrater",
         "name": "Arreat Crater",
-        "description": "Leap leaves behind an impassable crater for 5 seconds. Reduces Leap's cooldown by 20 seconds.",
+        "description": "Leap leaves behind an impassable crater for 5 seconds.  Reduces Leap's cooldown by 20 seconds.",
         "icon": "storm_ui_icon_sonya_leap.png",
         "type": "Heroic",
         "sort": 1,

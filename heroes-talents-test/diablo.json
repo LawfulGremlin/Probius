@@ -19,6 +19,15 @@
     "Overconfident",
     "RoleTank"
   ],
+  "stats": {
+    "hp": 2825,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 105,
+    "attackRange": 1.25,
+    "attackSpeed": 0.9524,
+    "radius": 1.1875
+  },
   "abilities": {
     "Diablo": [
       {

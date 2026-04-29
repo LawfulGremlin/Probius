@@ -24,6 +24,15 @@
     "TowerPusher",
     "WaveClearer"
   ],
+  "stats": {
+    "hp": 2750,
+    "resource": 100,
+    "resourceType": "Energy",
+    "attackDamage": 117,
+    "attackRange": 2.5,
+    "attackSpeed": 0.6667,
+    "radius": 1.25
+  },
   "abilities": {
     "Deathwing": [
       {

@@ -18,6 +18,15 @@
     "RoleTank",
     "WaveClearer"
   ],
+  "stats": {
+    "hp": 2625,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 99,
+    "attackRange": 1.5,
+    "attackSpeed": 0.9091,
+    "radius": 0.75
+  },
   "abilities": {
     "Johanna": [
       {

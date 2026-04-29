@@ -19,6 +19,15 @@
     "Overconfident",
     "RoleTank"
   ],
+  "stats": {
+    "hp": 2625,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 95,
+    "attackRange": 2,
+    "attackSpeed": 0.9091,
+    "radius": 0.8125
+  },
   "abilities": {
     "Arthas": [
       {
@@ -58,7 +67,7 @@
       {
         "uid": "2f62cd",
         "name": "Army of the Dead",
-        "description": "Consume all charges to summon an equal number of Ghouls that last -1 seconds and attack for 20 (+4% per level) damage. Reactivate to sacrifice a ghoul, healing Arthas for 240 (+4% per level) Health. Stores up to 6 charges.  Everytime a nearby enemy Minion dies, reduce the charge cooldown of this Ability by 1 second. Takedowns reduce the charge cooldown of this Ability by 6 seconds.",
+        "description": "Consume all charges to summon an equal number of Ghouls that lose Health over 20 seconds and attack for 20 (+4% per level) damage. Reactivate to sacrifice a ghoul, healing Arthas for 240 (+4% per level) Health. Stores up to 6 charges.  Whenever a nearby enemy Minion dies, reduce the charge cooldown of this Ability by 1 second. Takedowns reduce the charge cooldown of this Ability by 6 seconds.",
         "hotkey": "R",
         "abilityId": "Arthas|R1",
         "cooldown": 18,
@@ -212,7 +221,7 @@
         "tooltipId": "ArthasArmyOfTheDead",
         "talentTreeId": "ArthasHeroicAbilityArmyoftheDead",
         "name": "Army of the Dead",
-        "description": "Consume all charges to summon an equal number of Ghouls that last -1 seconds and attack for 20 (+4% per level) damage. Reactivate to sacrifice a ghoul, healing Arthas for 240 (+4% per level) Health. Stores up to 6 charges.  Everytime a nearby enemy Minion dies, reduce the charge cooldown of this Ability by 1 second. Takedowns reduce the charge cooldown of this Ability by 6 seconds.",
+        "description": "Consume all charges to summon an equal number of Ghouls that lose Health over 20 seconds and attack for 20 (+4% per level) damage. Reactivate to sacrifice a ghoul, healing Arthas for 240 (+4% per level) Health. Stores up to 6 charges.  Whenever a nearby enemy Minion dies, reduce the charge cooldown of this Ability by 1 second. Takedowns reduce the charge cooldown of this Ability by 6 seconds.",
         "icon": "storm_ui_icon_arthas_armyofthedead.png",
         "type": "Heroic",
         "sort": 1,

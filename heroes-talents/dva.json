@@ -18,6 +18,15 @@
     "Overconfident",
     "RoleTank"
   ],
+  "stats": {
+    "hp": 2150,
+    "resource": 100,
+    "resourceType": "Charge",
+    "attackDamage": 22,
+    "attackRange": 3.75,
+    "attackSpeed": 4,
+    "radius": 1.1875
+  },
   "abilities": {
     "DVa": [
       {

@@ -69,9 +69,10 @@ async def printCompactBuild(client,channel,text):
 	#bot channel: posts whole thing
 	#outside bot channel: post formatted query and name of talents, and reacts :thumb up:
 	#when reacted to, print whole thing
+	from heroesTalents import get_hero_data
 	build,hero=text.split(',')#Example: T0230303,DVa
 	hero=aliases(hero)
-	(abilities,talents)=client.heroPages[hero]
+	(abilities,talents)=await get_hero_data(hero)
 	build=build.replace('q','1').replace('w','2').replace('e','3').replace('r','4').replace('t','5')
 
 	#Check for malicious input, since the build will be repeated back
@@ -99,8 +100,9 @@ async def printBuild(channel,build,talents):#Posts all tooltips on reactions, or
 	await printLarge(channel,'\n'.join(output))
 
 async def printBuildFromReaction(client,message):
+	from heroesTalents import get_hero_data
 	build,hero=message.content.split('[')[1].split(']')[0].split(',')
-	(abilities,talents)=client.heroPages[hero]
+	(abilities,talents)=await get_hero_data(hero)
 	await printBuild(message.channel,build,talents)
 
 async def addUnderscoresAndNewline(namelist,ability):
@@ -138,20 +140,131 @@ async def printAbilityTalents(message,abilities,talents,hotkey,hero):
 		output+=output2
 	await printLarge(message.channel,output)
 
-async def printSearch(abilities, talents, name, hero, deep=False):#Prints abilities and talents with substring
-	name=abilityAliases(hero,name)
+_QUERY_KEYWORD_RE = re.compile(r'(\()|(\))|(\bAND\b)|(\bOR\b)|(\bNOT\b)')
+
+def _tokenizeQuery(s):
+	tokens=[]
+	pos=0
+	for m in _QUERY_KEYWORD_RE.finditer(s):
+		term=s[pos:m.start()].strip()
+		if term:
+			tokens.append(('TERM',term))
+		if m.group(1):
+			tokens.append(('LPAREN',None))
+		elif m.group(2):
+			tokens.append(('RPAREN',None))
+		elif m.group(3):
+			tokens.append(('AND',None))
+		elif m.group(4):
+			tokens.append(('OR',None))
+		elif m.group(5):
+			tokens.append(('NOT',None))
+		pos=m.end()
+	term=s[pos:].strip()
+	if term:
+		tokens.append(('TERM',term))
+	return tokens
+
+class _QueryParser:
+	def __init__(self,tokens):
+		self.tokens=tokens
+		self.i=0
+	def _peek(self):
+		return self.tokens[self.i][0] if self.i<len(self.tokens) else None
+	def _consume(self):
+		t=self.tokens[self.i]
+		self.i+=1
+		return t
+	def parseOr(self):
+		left=self.parseAnd()
+		while self._peek()=='OR':
+			self._consume()
+			right=self.parseAnd()
+			left=('OR',left,right)
+		return left
+	def parseAnd(self):
+		left=self.parseNot()
+		while self._peek()=='AND':
+			self._consume()
+			right=self.parseNot()
+			left=('AND',left,right)
+		return left
+	def parseNot(self):
+		if self._peek()=='NOT':
+			self._consume()
+			return ('NOT',self.parseNot())
+		return self.parseAtom()
+	def parseAtom(self):
+		if self._peek()=='LPAREN':
+			self._consume()
+			node=self.parseOr()
+			if self._peek()=='RPAREN':
+				self._consume()
+			return node
+		if self._peek()=='TERM':
+			_,val=self._consume()
+			return ('TERM',val)
+		return None
+
+def parseSearchQuery(name):
+	# Parse a query supporting AND, OR, NOT (uppercase), and parenthesized groups.
+	# Term values are lowercased for case-insensitive substring matching.
+	tokens=_tokenizeQuery(name)
+	if not tokens:
+		return None
+	tokens=[(k,v.lower()) if k=='TERM' else (k,v) for k,v in tokens]
+	return _QueryParser(tokens).parseOr()
+
+def applyAliasesToQuery(node,hero):
+	if node is None:
+		return None
+	kind=node[0]
+	if kind=='TERM':
+		return ('TERM',abilityAliases(hero,node[1]))
+	if kind in ('AND','OR'):
+		return (kind,applyAliasesToQuery(node[1],hero),applyAliasesToQuery(node[2],hero))
+	if kind=='NOT':
+		return ('NOT',applyAliasesToQuery(node[1],hero))
+	return node
+
+def evalSearchQuery(node,item,deep):
+	if node is None:
+		return False
+	kind=node[0]
+	if kind=='TERM':
+		return bool(deepAndShallowSearchFoundBool(item,node[1],deep))
+	if kind=='AND':
+		return evalSearchQuery(node[1],item,deep) and evalSearchQuery(node[2],item,deep)
+	if kind=='OR':
+		return evalSearchQuery(node[1],item,deep) or evalSearchQuery(node[2],item,deep)
+	if kind=='NOT':
+		return not evalSearchQuery(node[1],item,deep)
+	return False
+
+def collectHighlightTerms(node):
+	# Terms not under a NOT, used to underline matches in the output.
+	if node is None:
+		return []
+	kind=node[0]
+	if kind=='TERM':
+		return [node[1]]
+	if kind in ('AND','OR'):
+		return collectHighlightTerms(node[1])+collectHighlightTerms(node[2])
+	return []
+
+async def printSearch(abilities, talents, name, hero, deep=False):#Prints abilities and talents matching a boolean query
 	name=name.replace('{','[').replace('}',']')#Search hotkeys/talent tiers
 	if not name:
 		return
-	if '--' in name:
-		[name,exclude]=name.split('--')
-	else:
-		exclude='this string is not in any abilities or talents'
-	namelist=name.split('&')
+	query=parseSearchQuery(name)
+	if query is None:
+		return
+	query=applyAliasesToQuery(query,hero)
+	highlights=collectHighlightTerms(query)
 	output=''
 	for ability in abilities:
-		if sum([1 for i in namelist if deepAndShallowSearchFoundBool(ability,i,deep)])==len(namelist) and exclude not in ability.lower():
-			output+=await addUnderscoresAndNewline(namelist,ability)
+		if evalSearchQuery(query,ability,deep):
+			output+=await addUnderscoresAndNewline(highlights,ability)
 	levelTiers=[0,1,2,3,4,5,6]
 	if hero=='Varian':
 		del levelTiers[1]
@@ -162,8 +275,8 @@ async def printSearch(abilities, talents, name, hero, deep=False):#Prints abilit
 	for i in levelTiers:
 		talentTier=talents[i]
 		for talent in talentTier:
-			if sum([1 for i in namelist if deepAndShallowSearchFoundBool(talent,i,deep)])==len(namelist) and exclude not in talent.lower():
-				output+=await addUnderscoresAndNewline(namelist,talent)
+			if evalSearchQuery(query,talent,deep):
+				output+=await addUnderscoresAndNewline(highlights,talent)
 	return output
 
 async def printLarge(channel,inputstring,separator='\n'):#Get long string. Print lines out in 2000 character chunks
@@ -193,9 +306,13 @@ async def printLarge(channel,inputstring,separator='\n'):#Get long string. Print
 	return firstMessage
 
 async def printAll(client,message,keyword, deep=False, heroList=getHeroes()):#When someone calls [all/keyword]
+	from heroesTalents import get_hero_data
 	toPrint=''
 	for hero in heroList:
-		(abilities,talents)=client.heroPages[hero]
+		try:
+			(abilities,talents)=await get_hero_data(hero)
+		except FileNotFoundError:
+			continue
 		output=await printSearch(abilities,talents,keyword,hero,deep)
 		if output=='':
 			continue

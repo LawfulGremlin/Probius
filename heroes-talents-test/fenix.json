@@ -18,6 +18,13 @@
     "RoleAutoAttacker",
     "WaveClearer"
   ],
+  "stats": {
+    "hp": 1140,
+    "attackDamage": 83,
+    "attackRange": 5,
+    "attackSpeed": 0.7407,
+    "radius": 1.0625
+  },
   "abilities": {
     "Fenix": [
       {

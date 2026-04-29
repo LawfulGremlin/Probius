@@ -16,6 +16,15 @@
     "EnergyImportant",
     "RoleCaster"
   ],
+  "stats": {
+    "hp": 1390,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 82,
+    "attackRange": 7,
+    "attackSpeed": 1,
+    "radius": 0.625
+  },
   "abilities": {
     "Chromie": [
       {

@@ -1,6 +1,7 @@
 tests/
 requirements-dev.txt
 pytest.ini
+resources/Maps
 .git
 .gitignore
 __pycache__/

@@ -19,6 +19,15 @@
     "RoleCaster",
     "WaveClearer"
   ],
+  "stats": {
+    "hp": 1430,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 90,
+    "attackRange": 1.6,
+    "attackSpeed": 1.1111,
+    "radius": 0.75
+  },
   "abilities": {
     "Lunara": [
       {

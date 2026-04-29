@@ -19,6 +19,13 @@
     "RoleAutoAttacker",
     "WaveClearer"
   ],
+  "stats": {
+    "hp": 1725,
+    "attackDamage": 102,
+    "attackRange": 2,
+    "attackSpeed": 1.6667,
+    "radius": 0.6875
+  },
   "abilities": {
     "Samuro": [
       {

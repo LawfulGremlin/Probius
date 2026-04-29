@@ -20,6 +20,15 @@
     "TowerPusher",
     "WaveClearer"
   ],
+  "stats": {
+    "hp": 2275,
+    "resource": 10,
+    "resourceType": "Scrap",
+    "attackDamage": 100,
+    "attackRange": 1.25,
+    "attackSpeed": 1.25,
+    "radius": 0.75
+  },
   "abilities": {
     "Gazlowe": [
       {

@@ -18,6 +18,15 @@
     "Overconfident",
     "RoleTank"
   ],
+  "stats": {
+    "hp": 2292,
+    "resource": 100,
+    "resourceType": "Energy",
+    "attackDamage": 20,
+    "attackRange": 4.5,
+    "attackSpeed": 4,
+    "radius": 0.8125
+  },
   "abilities": {
     "Zarya": [
       {

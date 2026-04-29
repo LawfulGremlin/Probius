@@ -19,6 +19,15 @@
     "TowerPusher",
     "WaveClearer"
   ],
+  "stats": {
+    "hp": 1550,
+    "resource": 500,
+    "resourceType": "Mana",
+    "attackDamage": 83,
+    "attackRange": 6.6,
+    "attackSpeed": 1.25,
+    "radius": 1.125
+  },
   "abilities": {
     "Zagara": [
       {

@@ -17,6 +17,15 @@
     "Helper",
     "RoleSupport"
   ],
+  "stats": {
+    "hp": 1560,
+    "resource": 100,
+    "resourceType": "Energy",
+    "attackDamage": 83,
+    "attackRange": 5.5,
+    "attackSpeed": 1,
+    "radius": 0.75
+  },
   "abilities": {
     "LtMorales": [
       {
